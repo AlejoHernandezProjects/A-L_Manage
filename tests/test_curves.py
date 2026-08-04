@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from src.curves import (
+    amortization_schedule,
     discount_factors,
     interpolate_zero,
     macaulay_duration,
@@ -152,6 +153,40 @@ def test_frances_dura_mucho_menos_que_bullet():
     d_bul = macaulay_duration(*schedule_cashflows(100.0, 0.045, 240, "bullet", 1), TENORES, ceros)
     assert d_fra < 0.7 * d_bul  # ≈ 8,6 a contra ≈ 13,2 a
     assert 6.0 < d_fra < 9.5
+
+
+def test_el_principal_amortizado_suma_el_nominal():
+    for amort, freq in (("frances", 1), ("bullet", 6), ("frances", 3)):
+        _, principal = amortization_schedule(100.0, 0.06, 120, amort, freq)
+        assert principal.sum() == pytest.approx(100.0)
+
+
+def test_un_bullet_devuelve_todo_el_principal_al_final():
+    meses, principal = amortization_schedule(100.0, 0.05, 24, "bullet", 6)
+    assert np.allclose(principal[:-1], 0.0)
+    assert principal[-1] == pytest.approx(100.0)
+    assert meses[-1] == 24
+
+
+def test_el_principal_frances_crece_con_cada_cuota():
+    """En cuota nivelada la parte de interés cae y la de principal sube. Es lo que
+    hace que la exposición de una hipoteca se concentre más tarde de lo que sugiere
+    un reparto lineal, pero mucho antes de lo que sugiere tratarla como bullet."""
+    _, principal = amortization_schedule(100.0, 0.06, 120, "frances", 1)
+    assert np.all(np.diff(principal) > 0)
+
+
+def test_el_principal_frances_llega_pronto_en_parte():
+    """A los 12 meses de una hipoteca a 20 años ya se devolvió algo de principal —
+    poco, pero no cero. Tratarla como bullet dice que es exactamente cero."""
+    meses, principal = amortization_schedule(100.0, 0.045, 240, "frances", 1)
+    devuelto_1a = principal[meses <= 12].sum()
+    assert 1.0 < devuelto_1a < 5.0
+
+
+def test_sin_plazo_no_hay_calendario():
+    meses, principal = amortization_schedule(100.0, 0.05, 0, "frances", 1)
+    assert len(meses) == 0 and len(principal) == 0
 
 
 def test_duracion_crece_con_el_plazo():

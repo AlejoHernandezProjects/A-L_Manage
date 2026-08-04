@@ -38,8 +38,8 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 - [x] Módulo 0 — Diseño propuesto y perfil del banco aprobado (ver §5 y §6)
 - [x] Módulo 0 — Implementación y validaciones: **gate superado** (0 ERROR, 1 WARNING).
       Ver §12 para las decisiones tomadas durante la implementación.
-- [ ] Módulo 1 — Balance sintético y brecha de repreciación **← AQUÍ ESTAMOS**
-- [ ] Módulo 2 — Modelo de depósitos a la vista (NMD)
+- [x] Módulo 1 — Balance sintético y brecha de repreciación. Ver §13.
+- [ ] Módulo 2 — Modelo de depósitos a la vista (NMD) **← AQUÍ ESTAMOS**
 - [ ] Módulo 3 — Margen financiero (NII)
 - [ ] Módulo 4 — Valor económico del patrimonio (EVE)
 - [ ] Módulo 5 — Alcance vs. estándar IRRBB
@@ -49,10 +49,12 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 ```
 config/params.py       BANK_PROFILE, MARKET, NMD_PARAMS, CALIBRATION_TARGETS,
                        VALIDATION_THRESHOLDS, SEED, make_config(**overrides)
-src/curves.py          Nelson-Siegel, interpolación, descuento, duración  [añadido]
+src/curves.py          Nelson-Siegel, interpolación, descuento, duración,
+                       calendario de amortización de principal  [añadido]
 src/data_gen.py        Módulo 0 — generación de datos
 src/validation.py      Módulo 0 — controles de calidad
 run_module0.py         Gate ejecutable: genera → valida → exit≠0 si hay ERROR  [añadido]
+run_module1.py         Informe de brecha de repreciación → data/gap_report.md  [añadido]
 src/balance.py         Módulo 1
 src/deposits.py        Módulo 2
 src/nii.py             Módulo 3
@@ -422,4 +424,75 @@ y la diferencia entre ambos métodos es uno de los entregables.
 pip install -r requirements.txt
 python run_module0.py     # exit≠0 si falla algún ERROR; informe en data/
 python -m pytest tests/ -q
+```
+
+## 13. Módulo 1 — Brecha de repreciación
+
+`src/balance.py`, `run_module1.py` → `data/gap_report.md`. 126 tests en verde.
+
+### 13.1 El hallazgo
+
+| | |
+|---|---|
+| Gap contractual acumulado a 12 meses | **−10.280 M = −20,6% de los activos** |
+| Estado vs. política interna | **ALERTA** (umbral de alerta: 20%) |
+| RSA/RSL a 12 meses | 0,72 |
+| Lo que eso predice | El margen financiero **cae** cuando suben las tasas |
+| Lo que dice el Módulo 0 | **ΔNII +1,72%** ante +200 pb |
+
+**Los dos números son correctos. El mal especificado es el gap.**
+
+La causa está en una sola línea del tratamiento: vista y ahorro —22.000 M, el 44% del
+fondeo— entran en la banda más corta porque contractualmente el cliente retira mañana.
+Eso equivale a suponer que el banco traslada el **100%** de cualquier movimiento de
+tasas a esos depósitos. La beta verdadera de vista es 0,25. El gap contractual está
+midiendo un banco que no existe.
+
+Ésta es, históricamente, la razón por la que la industria dejó de usar el análisis de
+brechas como herramienta única. El hallazgo está bajo test
+(`test_el_gap_contradice_al_margen_financiero`).
+
+El problema es **doble**, y el Módulo 2 debe arreglar las dos mitades: la **cuantía**
+del traspaso (la beta) y el **momento** en que ocurre (el plazo conductual del core).
+Corregir sólo la primera dejaría el EVE del Módulo 4 igual de mal.
+
+### 13.2 Decisiones de diseño
+
+- **Ninguna beta ni supuesto conductual en el Módulo 1.** La beta es producto del
+  Módulo 2; usarla antes de estimarla sería importar el resultado al módulo anterior y
+  dejar al Módulo 2 sin nada que demostrar.
+- **Las 19 bandas del marco estandarizado IRRBB**, con sus **puntos medios en años**
+  (`IRRBB_BANDS`), más un agrupamiento a 8 para el informe (`BANDAS_ALCO`). Los puntos
+  medios se definen ahora porque son exactamente los que el Módulo 4 necesita para el
+  EVE estandarizado. Intervalos abiertos por abajo y cerrados por arriba.
+- **Reparto amortizado del saldo, no bullet.** El principal devuelto antes del
+  horizonte de repreciación se asigna a la banda en que se cobra; sólo el remanente va
+  a la banda del repricing. Una hipoteca francesa a 20 años no expone su saldo íntegro
+  dentro de 20 años. Con 16.200 M de cartera amortizable la diferencia es material: el
+  gap a 12 meses pasa de −13.192 M (bullet) a −10.280 M (amortizado). El informe
+  publica ambos.
+- **Gap por vencimiento publicado al lado**, no como métrica sino como el error que el
+  módulo existe para no cometer. Sí es la tabla relevante para riesgo de **liquidez**,
+  que es otro problema y no el de este proyecto.
+- **Reconciliación obligatoria** de los 50.000 M contables a RSA/RSL. Un informe de gap
+  que no cuadra con el balance es un informe que nadie audita.
+- **No sensibles y patrimonio quedan fuera de las bandas.** No repactan nunca;
+  asignarles una banda sería inventar exposición.
+- **`GAP_THRESHOLDS` son de apetito interno, no regulatorios.** El único umbral que
+  Basilea fija es el del *outlier test* de EVE (15% del Tier 1, Módulo 4). Se incluyen
+  porque un informe de gap sin umbral es un número sin decisión asociada.
+
+### 13.3 Dos notas honestas
+
+- Con datos mensuales la banda **overnight queda vacía**. Los NMD son overnight de
+  verdad; la granularidad del generador los agrupa en O/N–1M.
+- El punto medio que Basilea da para overnight, 0,0028 años, es 1/365 redondeado, y
+  bajo base 30/360 cae tres diezmilésimas de mes fuera del tope de su propia banda. Se
+  conserva el número regulatorio en lugar de "arreglarlo": el punto medio es el plazo
+  al que el marco estandarizado descuenta, y ahí manda el texto.
+
+### 13.4 Cómo correrlo
+
+```
+python run_module1.py     # informe en data/gap_report.md
 ```

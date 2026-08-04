@@ -510,6 +510,82 @@ proyecto.
 """
 
 # ---------------------------------------------------------------------------
+# 6bis. Bandas temporales IRRBB (Módulo 1)
+# ---------------------------------------------------------------------------
+
+IRRBB_BANDS = [
+    #  código           etiqueta      límite inferior / superior en meses   punto medio (años)
+    ("overnight",       "O/N",              0.0,      1.0 / 30.0,   0.0028),
+    ("on_1m",           "O/N–1M",     1.0 / 30.0,            1.0,   0.0417),
+    ("1m_3m",           "1M–3M",             1.0,            3.0,   0.1667),
+    ("3m_6m",           "3M–6M",             3.0,            6.0,   0.3750),
+    ("6m_9m",           "6M–9M",             6.0,            9.0,   0.6250),
+    ("9m_1a",           "9M–1A",             9.0,           12.0,   0.8750),
+    ("1a_1_5a",         "1A–1,5A",          12.0,           18.0,   1.2500),
+    ("1_5a_2a",         "1,5A–2A",          18.0,           24.0,   1.7500),
+    ("2a_3a",           "2A–3A",            24.0,           36.0,   2.5000),
+    ("3a_4a",           "3A–4A",            36.0,           48.0,   3.5000),
+    ("4a_5a",           "4A–5A",            48.0,           60.0,   4.5000),
+    ("5a_6a",           "5A–6A",            60.0,           72.0,   5.5000),
+    ("6a_7a",           "6A–7A",            72.0,           84.0,   6.5000),
+    ("7a_8a",           "7A–8A",            84.0,           96.0,   7.5000),
+    ("8a_9a",           "8A–9A",            96.0,          108.0,   8.5000),
+    ("9a_10a",          "9A–10A",          108.0,          120.0,   9.5000),
+    ("10a_15a",         "10A–15A",         120.0,          180.0,  12.5000),
+    ("15a_20a",         "15A–20A",         180.0,          240.0,  17.5000),
+    ("mas_20a",         ">20A",            240.0,   float("inf"),  25.0000),
+]
+"""Las 19 bandas del marco estandarizado de IRRBB (Comité de Basilea, 2016).
+
+Intervalos **abiertos por abajo y cerrados por arriba**: un plazo de 3,0 meses cae en
+`1M–3M`, no en `3M–6M`. Son exhaustivas y disjuntas por construcción; el control está
+bajo test.
+
+**El punto medio no es decorativo.** Es el plazo al que el marco estandarizado
+descuenta el flujo asignado a cada banda, y es exactamente lo que el Módulo 4
+necesitará para el EVE estandarizado. Se define aquí una sola vez, junto a los
+límites, para que nadie los reinvente después con otros números.
+
+Nota de granularidad: con datos mensuales la banda *overnight* queda vacía. Los
+depósitos a la vista son overnight de verdad — el cliente retira mañana — pero el
+generador trabaja a fin de mes y los agrupa en `O/N–1M`. No cambia ninguna conclusión
+y va dicho en el informe.
+"""
+
+BANDAS_ALCO = {
+    "≤ 1M": ["overnight", "on_1m"],
+    "1–3M": ["1m_3m"],
+    "3–6M": ["3m_6m"],
+    "6–12M": ["6m_9m", "9m_1a"],
+    "1–2A": ["1a_1_5a", "1_5a_2a"],
+    "2–5A": ["2a_3a", "3a_4a", "4a_5a"],
+    "5–10A": ["5a_6a", "6a_7a", "7a_8a", "8a_9a", "9a_10a"],
+    "> 10A": ["10a_15a", "15a_20a", "mas_20a"],
+}
+"""Agrupamiento de las 19 bandas regulatorias a 8 para el informe al comité.
+
+Nadie presenta 19 filas a un ALCO. El cálculo se hace siempre sobre las 19 —que son
+las que el supervisor espera— y la agregación es sólo de presentación.
+"""
+
+GAP_THRESHOLDS = {
+    "gap_12m_sobre_activos_aviso": 0.10,
+    "gap_12m_sobre_activos_alerta": 0.20,
+    "rsa_rsl_12m_banda": (0.85, 1.15),
+}
+"""Umbrales internos de política de ALM para el gap acumulado a 12 meses.
+
+**No son regulatorios.** El único umbral que Basilea fija es el del *outlier test* de
+EVE (15% del Tier 1, Módulo 4). Estos son límites de apetito de riesgo que un comité
+se pone a sí mismo, y varían mucho entre bancos: un gap acumulado a un año por encima
+del 10% de los activos suele disparar discusión, y por encima del 20% suele exigir
+cobertura o un plan de acción documentado.
+
+Se incluyen porque un informe de gap sin umbral es un número sin decisión asociada, y
+lo que un ALCO hace es decidir.
+"""
+
+# ---------------------------------------------------------------------------
 # 7. Objetivos de calibración (§6.1) — criterios de aceptación
 # ---------------------------------------------------------------------------
 
@@ -600,6 +676,7 @@ from types import SimpleNamespace  # noqa: E402
 _EXPORTABLES = (
     "SEED", "DATES", "CONVENTIONS", "BANK_PROFILE", "RATE_REGIMES", "POLICY_RATE",
     "CURVE", "DEPOSIT_RATES", "NMD_PARAMS", "N_COHORTES_OBJETIVO", "INSTRUMENT_SPECS",
+    "IRRBB_BANDS", "BANDAS_ALCO", "GAP_THRESHOLDS",
     "CALIBRATION_TARGETS", "VALIDATION_THRESHOLDS", "SENSITIVITY_GRID",
     "ROOT", "DATA_DIR", "GROUND_TRUTH_PATH",
 )

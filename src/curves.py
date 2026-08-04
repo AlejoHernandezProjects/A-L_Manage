@@ -25,6 +25,7 @@ __all__ = [
     "interpolate_zero",
     "discount_factors",
     "schedule_cashflows",
+    "amortization_schedule",
     "present_value",
     "macaulay_duration",
     "modified_duration",
@@ -265,6 +266,57 @@ def schedule_cashflows(
         montos[-1] += nominal
 
     return tiempos, montos
+
+
+def amortization_schedule(
+    nominal: float,
+    tasa_anual: float,
+    plazo_meses: int,
+    amortizacion: str = "bullet",
+    frecuencia_pago_meses: int = 1,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Calendario de devolución de **principal** (sin intereses).
+
+    Es la contraparte de :func:`schedule_cashflows`, que devuelve el flujo total.
+    Aquí interesa sólo el principal porque es lo que se asigna a las bandas
+    temporales del gap de repreciación: lo que expone al riesgo de tasa es el saldo
+    vivo, no el interés que se cobra por él.
+
+    Para el sistema francés, el principal del pago *k* es la diferencia de saldos
+    insolutos ``S(k−1) − S(k)`` con
+
+        S(k)/S(0) = ((1+i)^n − (1+i)^k) / ((1+i)^n − 1)
+
+    Args:
+        nominal: Saldo vivo hoy.
+        tasa_anual: Tasa nominal anual del contrato.
+        plazo_meses: Meses hasta el vencimiento desde hoy.
+        amortizacion: ``"frances"`` (cuota nivelada) o ``"bullet"``.
+        frecuencia_pago_meses: Meses entre pagos.
+
+    Returns:
+        ``(meses, principal)`` con los meses desde hoy en que ocurre cada devolución
+        y el monto de principal de cada una. La suma del principal es el nominal.
+    """
+    if plazo_meses <= 0 or nominal == 0:
+        return np.array([]), np.array([])
+
+    freq = max(1, int(frecuencia_pago_meses))
+    n = max(1, int(np.ceil(plazo_meses / freq)))
+    meses = np.array([(k + 1) * freq for k in range(n)], dtype=float)
+
+    if amortizacion != "frances" or n == 1:
+        principal = np.zeros(n)
+        principal[-1] = nominal
+        return meses, principal
+
+    i = tasa_anual * freq / 12.0
+    ks = np.arange(n + 1, dtype=float)
+    if i <= 0:
+        saldos = nominal * (1.0 - ks / n)
+    else:
+        saldos = nominal * ((1 + i) ** n - (1 + i) ** ks) / ((1 + i) ** n - 1)
+    return meses, -np.diff(saldos)
 
 
 # ---------------------------------------------------------------------------

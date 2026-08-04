@@ -8,4 +8,4 @@ venv/
 # Salida del generador: reproducible con la semilla, no se versiona
 data/*.csv
 data/*.parquet
-data/validation_report.md
+data/*_report.md

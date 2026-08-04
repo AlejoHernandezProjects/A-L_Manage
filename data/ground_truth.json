@@ -1,0 +1,178 @@
+{
+  "_nota": "Ground truth del generador. 'vida_promedio_a' es vida promedio (mean life), NO half-life; difieren en 1/ln2 y el tope IRRBB aplica a la primera. Este archivo es la respuesta del examen: el Módulo 2 sólo debe leerlo para reportar su error de estimación, nunca para estimar.",
+  "semilla": 20251231,
+  "fechas": {
+    "inicio": "2016-01-31",
+    "n_meses": 120
+  },
+  "convenciones": {
+    "base_dias": "30/360",
+    "capitalizacion": "continua",
+    "moneda": "USD",
+    "dias_habiles": false
+  },
+  "banco": {
+    "activos_totales_musd": 50000.0,
+    "tier1_musd": 4000.0,
+    "nombre": "Banco universal genérico, corporativo + minorista"
+  },
+  "betas_deposito": {
+    "vista": {
+      "beta_up": 0.25,
+      "beta_down": 0.55,
+      "beta_largo_plazo": 0.4,
+      "lambda_ajuste": 0.3,
+      "alpha": 0.0005,
+      "kappa_ancla": 0.02
+    },
+    "ahorro": {
+      "beta_up": 0.45,
+      "beta_down": 0.75,
+      "beta_largo_plazo": 0.6,
+      "lambda_ajuste": 0.35,
+      "alpha": 0.0015,
+      "kappa_ancla": 0.02
+    },
+    "plazo": {
+      "beta_up": 0.85,
+      "beta_down": 0.9,
+      "beta_largo_plazo": 0.875,
+      "lambda_ajuste": 0.7,
+      "alpha": 0.002,
+      "kappa_ancla": 0.02
+    }
+  },
+  "nmd": {
+    "vista": {
+      "vida_promedio_a": 4.2,
+      "half_life_a": 2.9112181583517702,
+      "lambda_decaimiento_anual": 0.23809523809523808,
+      "core_share": 0.85,
+      "crecimiento_anual": 0.045,
+      "gamma_migracion": 2.0,
+      "tope_irrbb_a": 5.0
+    },
+    "ahorro": {
+      "vida_promedio_a": 3.0,
+      "half_life_a": 2.0794415416798357,
+      "lambda_decaimiento_anual": 0.3333333333333333,
+      "core_share": 0.9,
+      "crecimiento_anual": 0.045,
+      "gamma_migracion": 3.0,
+      "tope_irrbb_a": 4.5
+    }
+  },
+  "estres_liquidez": {
+    "mes": 96,
+    "caidas": [
+      -0.05,
+      -0.04
+    ],
+    "meses_recuperacion": 6,
+    "fraccion_recuperada": 0.6666666666666666,
+    "erosion_permanente_core": 0.02
+  },
+  "regimenes_tasa": [
+    {
+      "nombre": "tasas_bajas",
+      "mes_inicio": 1,
+      "mes_fin": 30,
+      "theta_inicio": 0.015,
+      "theta_fin": 0.015,
+      "kappa": 0.8,
+      "sigma": 0.0035,
+      "pendiente_inicio": 0.015,
+      "pendiente_fin": 0.015
+    },
+    {
+      "nombre": "ciclo_alzas",
+      "mes_inicio": 31,
+      "mes_fin": 54,
+      "theta_inicio": 0.015,
+      "theta_fin": 0.055,
+      "kappa": 2.5,
+      "sigma": 0.006,
+      "pendiente_inicio": 0.015,
+      "pendiente_fin": -0.008
+    },
+    {
+      "nombre": "meseta_alta",
+      "mes_inicio": 55,
+      "mes_fin": 84,
+      "theta_inicio": 0.0525,
+      "theta_fin": 0.0525,
+      "kappa": 1.5,
+      "sigma": 0.004,
+      "pendiente_inicio": -0.008,
+      "pendiente_fin": 0.001
+    },
+    {
+      "nombre": "normalizacion",
+      "mes_inicio": 85,
+      "mes_fin": 120,
+      "theta_inicio": 0.0525,
+      "theta_fin": 0.03,
+      "kappa": 1.2,
+      "sigma": 0.005,
+      "pendiente_inicio": 0.001,
+      "pendiente_fin": 0.01
+    }
+  ],
+  "spreads_pb": {
+    "efectivo": -25.0,
+    "inversiones": 35.0,
+    "comercial": 120.0,
+    "hipotecario": 100.0,
+    "consumo": 650.0,
+    "vehiculos": 350.0,
+    "tarjetas": 1400.0,
+    "otros_activos": 0.0,
+    "interbancario": 40.0,
+    "otros_pasivos": 0.0,
+    "patrimonio": 0.0
+  },
+  "shares_balance": {
+    "efectivo": 0.04,
+    "inversiones": 0.18,
+    "comercial": 0.324,
+    "hipotecario": 0.18,
+    "consumo": 0.086,
+    "vehiculos": 0.058,
+    "tarjetas": 0.072,
+    "otros_activos": 0.06,
+    "vista": 0.22,
+    "ahorro": 0.22,
+    "plazo": 0.26,
+    "interbancario": 0.15,
+    "otros_pasivos": 0.06,
+    "patrimonio": 0.09
+  },
+  "revolving_ratio_tarjetas": 0.35,
+  "objetivos_calibracion": {
+    "duracion_activos_sensibles_a": [
+      2.2,
+      2.5
+    ],
+    "duracion_pasivos_sensibles_a": [
+      1.8,
+      2.1
+    ],
+    "gap_duracion_a": [
+      0.4,
+      0.6
+    ],
+    "delta_eve_peor_sobre_tier1": [
+      -0.13,
+      -0.09
+    ],
+    "delta_nii_12m_up200": [
+      0.015,
+      0.035
+    ],
+    "nim": [
+      0.028,
+      0.036
+    ]
+  },
+  "hash_dataset": "11b890df216c8e688cdce78e9b3b1ca3e5091eca94f095d5da76369c30420599"
+}

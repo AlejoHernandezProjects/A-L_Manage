@@ -1,0 +1,425 @@
+# Simulador ALM / IRRBB — Contexto de proyecto
+
+## 1. Qué es esto
+
+Simulador de Asset and Liability Management para un banco comercial genérico,
+como proyecto de portafolio de ciencia de datos. Implementa el núcleo cuantitativo
+del marco de Basilea sobre riesgo de tasa de interés en el libro bancario
+(IRRBB, Comité de Basilea, 2016): las métricas NII y EVE bajo los seis escenarios
+de choque prescritos por el estándar.
+
+Perfil del autor: matemáticas aplicadas + ingeniería en sistemas. Objetivo doble:
+(1) demostrar comprensión del problema de gestión de activos y pasivos a nivel de
+tesorería, y (2) aprender cómo se maneja en la práctica profesional real.
+
+Lenguaje: Python. Moneda única estable. Sin coyuntura de ningún país específico.
+
+## 2. Cómo quiero que trabajes conmigo
+
+Actúa como **mentor de mesa de ALM**, no solo como generador de código:
+
+- Explica cada decisión como la tomaría un equipo de ALM / riesgo de mercado real.
+- Señala explícitamente dónde la práctica profesional difiere de la teoría de libro.
+- Usa y explica las convenciones de industria: nomenclatura, indicadores estándar,
+  umbrales regulatorios, buenas prácticas de reporting al ALCO.
+- Por cada paso: qué se hace y **por qué**.
+
+**Protocolo de fases (inviolable).** Vamos en orden 0 → 1 → 2 → 3 → 4 → 5.
+Para cada fase: (1) propón el diseño — funciones, firmas, supuestos, parámetros
+de calibración — y explica las decisiones; (2) **espera mi visto bueno**;
+(3) implementa con docstrings y tests. No avances a la siguiente fase sin que yo
+confirme. En el Módulo 0, además, los datos deben pasar sus validaciones antes de
+avanzar.
+
+Usa **plan mode** para proponer diseño antes de tocar archivos.
+
+## 3. Estado actual
+
+- [x] Módulo 0 — Diseño propuesto y perfil del banco aprobado (ver §5 y §6)
+- [x] Módulo 0 — Implementación y validaciones: **gate superado** (0 ERROR, 1 WARNING).
+      Ver §12 para las decisiones tomadas durante la implementación.
+- [ ] Módulo 1 — Balance sintético y brecha de repreciación **← AQUÍ ESTAMOS**
+- [ ] Módulo 2 — Modelo de depósitos a la vista (NMD)
+- [ ] Módulo 3 — Margen financiero (NII)
+- [ ] Módulo 4 — Valor económico del patrimonio (EVE)
+- [ ] Módulo 5 — Alcance vs. estándar IRRBB
+
+## 4. Estructura del repositorio
+
+```
+config/params.py       BANK_PROFILE, MARKET, NMD_PARAMS, CALIBRATION_TARGETS,
+                       VALIDATION_THRESHOLDS, SEED, make_config(**overrides)
+src/curves.py          Nelson-Siegel, interpolación, descuento, duración  [añadido]
+src/data_gen.py        Módulo 0 — generación de datos
+src/validation.py      Módulo 0 — controles de calidad
+run_module0.py         Gate ejecutable: genera → valida → exit≠0 si hay ERROR  [añadido]
+src/balance.py         Módulo 1
+src/deposits.py        Módulo 2
+src/nii.py             Módulo 3
+src/eve.py             Módulo 4
+src/scenarios.py       Los seis escenarios IRRBB (definidos UNA sola vez)
+data/ground_truth.json Parámetros verdaderos, escrito por el generador
+tests/
+notebooks/             Solo exploración, nunca lógica de producción
+README.md              Problema, supuestos, resultados, alcance vs. IRRBB
+```
+
+## 5. Perfil del banco (decisiones ya cerradas)
+
+**Banco universal grande, ~USD 50.000 M en activos, corporativo + minorista.**
+**Posicionamiento: cuasi calzado con descalce moderado.**
+**Series históricas: 120 meses, con un episodio de estrés de liquidez.**
+
+### Tensión pedagógica objetivo (deliberada, no accidental)
+
+El banco debe calibrarse de modo que ante **+200 pb paralelo**:
+- El **NII mejore** (cartera comercial variable repacta rápido; los depósitos
+  trasladan solo una fracción vía beta).
+- El **EVE se deteriore** (cartera hipotecaria fija a 15–20 años, duración alta).
+
+Ese signo opuesto es la razón por la que Basilea exige ambas perspectivas y es el
+resultado central que el proyecto debe demostrar con números propios.
+
+### Activos: USD 50.000 M
+
+| Rubro | % | USD M | Estructura de tasa | Plazo / repricing |
+|---|---|---|---|---|
+| Efectivo y encaje | 4,0 | 2.000 | No sensible / overnight | Inmediato |
+| Portafolio de inversiones | 18,0 | 9.000 | 80% fija, 20% variable | Duración objetivo 3,5 a |
+| Crédito comercial | 32,4 | 16.200 | 85% variable (ref + spread) | Repacta trimestral, vence 3–7 a |
+| Crédito hipotecario | 18,0 | 9.000 | 90% fija | 15–20 a |
+| Consumo | 8,6 | 4.320 | Fija | 3–5 a |
+| Vehículos | 5,8 | 2.880 | Fija | 4–5 a |
+| Tarjetas de crédito | 7,2 | 3.600 | Tasa administrada | Repricing conductual ~3–6 m |
+| Otros activos no sensibles | 6,0 | 3.000 | — | — |
+
+### Pasivos y patrimonio: USD 50.000 M
+
+| Rubro | % | USD M | Comentario |
+|---|---|---|---|
+| Depósitos a la vista (NMD transaccional) | 22,0 | 11.000 | Beta baja, core alto |
+| Cuentas de ahorro (NMD no transaccional) | 22,0 | 11.000 | Beta media |
+| Depósitos a plazo | 26,0 | 13.000 | Beta alta, plazo contractual 3–24 m |
+| Interbancario y deuda emitida | 15,0 | 7.500 | Repacta rápido; colchón de calce |
+| Otros pasivos no sensibles | 6,0 | 3.000 | — |
+| Patrimonio | 9,0 | 4.500 | Capital nivel 1 ≈ 4.000 |
+
+**Justificación.** Loan-to-deposit = 36.000/35.000 ≈ 103%, dentro del rango
+90–110% típico de un universal financiado con depósitos minoristas. Los NMD
+(vista + ahorro) son 44% del fondeo: casi la mitad del pasivo no tiene vencimiento
+contractual, por lo que el EVE depende de un supuesto de comportamiento y no de un
+contrato. Capital nivel 1 ≈ 4.000 M fija el **umbral de alerta supervisora del 15%
+en −600 M de ΔEVE**.
+
+## 6. Módulo 0 — Diseño aprobado
+
+### 6.1 Objetivos de calibración (criterios de aceptación)
+
+Definidos ANTES de generar, para no acomodar parámetros al resultado deseado.
+
+| Métrica | Objetivo |
+|---|---|
+| Duración modificada de activos sensibles | 2,2 – 2,5 a |
+| Duración modificada de pasivos (post-NMD) | 1,8 – 2,1 a |
+| Gap de duración | +0,4 a +0,6 a |
+| ΔEVE peor escenario / Tier 1 | −9% a −13% |
+| ΔNII 12m (+200 pb) | +1,5% a +3,5% |
+| NIM | 2,8% – 3,6% |
+
+### 6.2 Tasa de referencia (120 meses)
+
+Vasicek discreto con régimen por tramos y movimientos en escalones de 25/50 pb
+(las tasas de política se mueven en decisiones de comité, no en browniano continuo).
+
+| Meses | Régimen | Nivel |
+|---|---|---|
+| 1–30 | Tasas bajas estables | ~1,5% |
+| 31–54 | Ciclo de alzas | 1,5% → 5,5% |
+| 55–84 | Meseta alta | ~5,25% |
+| 85–120 | Normalización a la baja | 5,25% → 3,0% |
+
+### 6.3 Curva de rendimiento
+
+Nelson-Siegel con nivel y pendiente atados al régimen. Empinada en tasas bajas,
+**invertida en el pico del ciclo (meses 60–80)**, para que el escenario de
+empinamiento del Módulo 4 tenga contenido económico real.
+
+Debe ser la MISMA curva que descuenta en el Módulo 4 y que alimenta las tasas
+variables del Módulo 1.
+
+### 6.4 Tasas pagadas al depósito — ajuste parcial asimétrico
+
+    d_t = d_{t-1} + λ · (α + β^± · r_t − d_{t-1}) + ε_t
+
+con β⁺ en subidas de r y β⁻ en bajadas.
+
+**Ground truth (registrar en `data/ground_truth.json`):**
+
+| Producto | β⁺ (sube) | β⁻ (baja) | λ |
+|---|---|---|---|
+| Vista | 0,25 | 0,55 | 0,30 |
+| Ahorro | 0,45 | 0,75 | 0,35 |
+| Plazo | 0,85 | 0,90 | 0,70 |
+
+β⁻ > β⁺ codifica el hecho estilizado central: el banco traslada las bajadas rápido
+y las subidas lento. Es también por qué una beta estimada con OLS simple está mal
+especificada — el Módulo 2 debe demostrarlo empíricamente contra este ground truth.
+
+### 6.5 Saldos de depósitos a la vista
+
+Generación estructuralmente descompuesta: `B_t = C_t (core) + V_t (volátil)`.
+
+- **C_t**: tendencia log-lineal (+4,5% anual) con decaimiento exponencial lento.
+  Vida media verdadera: 4,2 años (vista), 3,0 años (ahorro).
+- **V_t**: estacionalidad (pico diciembre, valle enero–febrero, salidas fiscales
+  en abril), AR(1) de media cero, y sensibilidad al diferencial de tasas
+  (migración de saldos hacia plazo cuando r sube y d no lo sigue).
+- **Episodio de estrés en el mes 96**: caída de 9% en dos meses, recuperación de
+  dos tercios en seis meses, erosión permanente de ~2% de C_t.
+
+**Nota conceptual para el README:** el core estadístico y el core regulatorio no
+son el mismo objeto. IRRBB define core como la porción que no *repactaría* ante un
+choque; la descomposición de series identifica la porción que no *se va* en volumen.
+Un depósito puede ser estable en saldo y aun así repactar. El error entre el core
+verdadero y el estimado es el resultado del experimento, no un defecto.
+
+### 6.6 Instrumentos
+
+~3.000 instrumentos, cada uno una **cohorte (vintage)** de producto, no un contrato
+individual. Fechas de originación distribuidas a lo largo de los 120 meses para que
+repactaciones y vencimientos queden escalonados (si todo se origina el mismo día,
+el balance entero repacta en una banda y las métricas son artefactos del generador).
+
+Convenciones: base 30/360; pagos mensuales en cartera, semestrales en inversiones;
+sin convención de días hábiles (calendario ideal); moneda única.
+
+### 6.7 Firmas propuestas
+
+```python
+generate_reference_rate(cfg, rng) -> pd.Series
+generate_yield_curves(ref_rate, cfg, rng) -> pd.DataFrame   # fechas × tenores
+generate_deposit_rates(ref_rate, cfg, rng) -> pd.DataFrame
+generate_deposit_balances(ref_rate, dep_rates, cfg, rng) -> pd.DataFrame
+generate_instruments(cfg, curve_cutoff, rng) -> pd.DataFrame
+build_ground_truth(cfg) -> dict
+generate_dataset(cfg, seed) -> DatasetBundle                # orquestador
+```
+
+### 6.8 Validaciones automáticas (gates)
+
+Cada control devuelve `Check(nombre, valor, umbral, severidad)`.
+**ERROR bloquea el avance al Módulo 1; WARNING solo informa.**
+
+| # | Control | Severidad |
+|---|---|---|
+| 1 | Activos = Pasivos + Patrimonio (tol. 1e-8 relativa) | ERROR |
+| 2 | 120 observaciones mensuales consecutivas, sin NaN ni duplicados | ERROR |
+| 3 | `fecha_repreciacion` ≤ `fecha_vencimiento`; tasa fija ⇒ repricing = vencimiento | ERROR |
+| 4 | Tasa activa por producto > tasa de fondeo asignada (spread > 0) | ERROR |
+| 5 | Curva a 3M dentro de ±25 pb de `ref_rate` en cada fecha | ERROR |
+| 6 | Factores de descuento positivos y decrecientes en el plazo | ERROR |
+| 7 | Regresión Δd ~ Δr: t-stat > 3 y R² > 0,5 | ERROR |
+| 8 | Beta OLS ingenua dentro de ±0,15 del promedio ponderado de β⁺/β⁻ | WARNING |
+| 9 | Saldos > 0; sin saltos > 15% fuera del mes 96 | WARNING |
+| 10 | Objetivos de calibración de §6.1 dentro de rango | WARNING |
+| 11 | Reproducibilidad: dos corridas con misma semilla → hash idéntico | ERROR |
+
+El control 8 es WARNING deliberadamente: **esperamos que falle un poco**, porque una
+regresión simétrica sobre un proceso asimétrico está mal especificada. Que dispare
+la alerta es información, no un defecto.
+
+## 7. Alcance de los módulos siguientes
+
+**Módulo 1 — Balance sintético.** DataFrame de instrumentos con al menos: id,
+categoria, lado, saldo, tasa, tipo_tasa, fecha_repreciacion, fecha_vencimiento,
+spread_sobre_referencia, frecuencia_pago, moneda. Informe de brecha de repreciación
+clasificando por **cuándo repacta**, no cuándo vence, usando el esquema de bandas
+temporales de IRRBB (agrupables si simplificamos).
+
+**Módulo 2 — NMD.** Separar core/volátil, estimar vida media efectiva y beta
+asimétrica, **validar contra el ground truth** reportando el error, y reasignar
+depósitos a bandas según el modelo y no según el contrato. Comentar los topes de
+plazo promedio que IRRBB impone por categoría de cliente: 5 años minorista
+transaccional, 4,5 minorista no transaccional, 4 mayorista. Este es el corazón
+conceptual del proyecto.
+
+**Módulo 3 — NII.** Proyección a 12 meses. Los instrumentos que repactan toman la
+tasa nueva (activos con beta ≈ 1, depósitos con la beta del Módulo 2); los que
+vencen se reinvierten bajo regla de balance explícita (constante o crecimiento
+parametrizable). Reportar ΔNII en % vs. base.
+
+**Módulo 4 — EVE.** EVE = VP(activos) − VP(pasivos) descontando a la curva del
+Módulo 0. Medir ΔEVE / capital nivel 1 y comentar el umbral de alerta supervisora
+del 15% (outlier test). Introducir duración y convexidad: usar la duración del gap
+como aproximación de primer orden y compararla contra la revaluación completa para
+mostrar dónde falla la aproximación lineal ante choques grandes.
+
+**Módulo 5 — Alcance vs. IRRBB.** Sección documentada que mapea con honestidad qué
+se implementó y qué quedó fuera y por qué. Fuera de alcance a explicar con
+suficiente profundidad para defenderlo en entrevista: opcionalidad conductual de
+prepago de créditos, retiro anticipado de depósitos a plazo, riesgo de base entre
+índices distintos, tratamiento multi-moneda completo, y la capa de gobernanza
+(política de ALM, límites, validación independiente de modelos estilo SR 11-7,
+backtesting periódico, documentación auditable).
+
+## 8. Escenarios de tasas — los seis de Basilea IRRBB
+
+Definidos **una sola vez** en `src/scenarios.py` y consumidos por igual por los
+Módulos 3 y 4:
+
+1. Paralelo hacia arriba
+2. Paralelo hacia abajo
+3. Empinamiento (cortas bajan, largas suben)
+4. Aplanamiento (cortas suben, largas bajan)
+5. Cortas hacia arriba
+6. Cortas hacia abajo
+
+- Los seis se aplican como **choques instantáneos** sobre la curva.
+- **Suelo post-choque (post-shock floor)** parametrizado en el config: parte de un
+  valor negativo cerca del tramo corto y sube gradualmente hacia cero en los plazos
+  largos.
+- Convención: el NII usa típicamente solo los dos paralelos; el EVE usa los seis.
+  Seguir esa convención pero dejar ambos configurables.
+- El **resultado headline de EVE es el PEOR de los seis** (máximo deterioro), que
+  es lo que se compara contra el umbral del 15%.
+
+## 9. Reglas de consistencia entre módulos (inviolables)
+
+1. Activos = Pasivos + Patrimonio, siempre.
+2. Las tasas activas por producto son mayores que las pasivas correspondientes.
+3. La curva que descuenta en el Módulo 4 es la misma referencia que alimenta las
+   tasas variables del Módulo 1.
+4. La beta estimada en el Módulo 2 alimenta el NII del Módulo 3.
+5. Los seis escenarios se definen una sola vez.
+6. Todos los supuestos y parámetros viven en `config/params.py`. **Nunca**
+   hardcodeados en medio de la lógica.
+7. Todo reproducible con semilla fija.
+
+## 10. Estándares de ingeniería
+
+- Código limpio y modular, un archivo por módulo, docstrings en todo lo público.
+- Notebooks solo para exploración, nunca lógica de producción.
+- **Tests unitarios de las funciones críticas de valoración**, como mínimo:
+  - un bono a tasa par vale su nominal;
+  - el balance cuadra;
+  - el modelo de depósitos recupera la beta del ground truth dentro de un margen;
+  - un balance perfectamente calzado da ΔNII y ΔEVE cercanos a cero.
+- **Análisis de sensibilidad como práctica estándar**: mostrar cómo se mueven los
+  resultados ante rangos de parámetros inciertos (sobre todo beta y porción core),
+  no un único número puntual.
+- **Reporting estilo ALCO** al cierre: presentar los resultados como lo haría un
+  equipo de tesorería ante su comité de activos y pasivos, incluyendo la tabla de
+  los seis escenarios con su ΔNII y ΔEVE.
+
+## 11. Puntos abiertos a cuestionar antes de codificar el Módulo 0
+
+1. **18% de hipotecario** es el principal motor del gap de duración. Subirlo a 25%
+   acerca el banco al umbral del 15% y cambia el tono del caso.
+2. **β⁺ = 0,25 para vista** es conservador (franquicia minorista fuerte). Un banco
+   con clientela más sensible al precio estaría en 0,40–0,50.
+3. **Vida media core de 4,2 años** queda holgada bajo el tope IRRBB de 5 años para
+   minorista transaccional, pero relativamente cerca del techo.
+
+**Los tres quedaron resueltos** al arrancar la implementación: (1) mix hipotecario
+se mantiene en 18% y el 25% pasa a ser sensibilidad declarada; (2) β⁺ vista se
+mantiene en 0,25 con barrido 0,25/0,35/0,45; (3) "vida media" se define como **vida
+promedio** (mean life), no half-life. Ver §12.3.
+
+## 12. Módulo 0 — Decisiones tomadas durante la implementación
+
+Todo lo de esta sección se decidió *después* del diseño de §6, al chocar con los
+datos. Se documenta aquí porque un lector externo (o el yo de dentro de seis meses)
+tiene que poder distinguir qué se planeó de qué se aprendió.
+
+### 12.1 Corrección de especificación en §6.4 — patología de signo
+
+§6.4 escribe `d_t = d_{t-1} + λ·(α + β^± · r_t − d_{t-1}) + ε_t`, con β^± aplicado
+al **nivel objetivo**. Tomada al pie de la letra la fórmula está mal: con r = 5%, el
+objetivo en régimen de subida es `α + 0,25·5% = 1,30%` y en régimen de bajada
+`α + 0,55·5% = 2,80%`. El primer recorte de tasas hace **subir** el objetivo 150 pb.
+Generando así, la beta estimada de vista salía en **−0,15**.
+
+La asimetría pertenece al **traspaso del cambio**, no al nivel:
+
+    d*_t = d*_{t-1} + β^± · Δr_t                 traspaso asimétrico de corto plazo
+    d*_t = d*_t + κ · (α + β̄·r_t − d*_t)         ancla competitiva, β̄ = (β⁺+β⁻)/2
+    d_t  = d_{t-1} + λ · (d*_t − d_{t-1}) + ε_t   ajuste parcial
+
+Es además cómo la industria usa la palabra: *de una subida de 100 pb trasladamos 25*.
+El ancla (`κ = 0,02` mensual) impide que el efecto trinquete lleve la tasa a cero tras
+un ciclo completo. El ground truth β⁺/β⁻/λ de §6.4 queda intacto.
+
+### 12.2 Respecificación del control #7 — el umbral era inalcanzable
+
+§6.8 pedía R² > 0,5 en la regresión contemporánea Δd ~ Δr. **Medido con ruido cero,
+vista topa en R² = 0,50 y no puede pasar de ahí**: con λ = 0,30 sólo un tercio de la
+respuesta ocurre en el mes del movimiento y el resto llega después, cuando Δr ya vale
+cero. No era un problema de calibración sino del propio modelo de §6.4.
+
+El control ahora regresa Δd sobre Δr **y sus 6 rezagos**, y exige t > 3 y R² > 0,5
+sobre la **suma** de coeficientes. Medido: R² = 0,69 / 0,89 / 0,98 y Σβ̂ = 0,32 / 0,52
+/ 0,86 (vista/ahorro/plazo). Σβ̂ es el traspaso acumulado — el número que un ALCO pide.
+
+Efecto colateral bueno: #7 y #8 quedan como un par. **#7 demuestra que el proceso
+generador SÍ es recuperable con la especificación correcta; #8 que la ingenua falla.**
+Eso es exactamente la tesis del Módulo 2.
+
+### 12.3 Vida promedio ≠ half-life
+
+Bajo decaimiento exponencial difieren en 1/ln2 ≈ 1,443. **IRRBB capea la vida
+promedio de repreciación** del core: 5 años minorista transaccional, 4,5 minorista no
+transaccional, 4 mayorista. Con 4,2 años de vida promedio el banco queda holgado; si
+esos 4,2 fueran half-life, la vida promedio sería 6,06 años y el core verdadero
+**excedería el tope**. `ground_truth.json` registra ambas cifras.
+
+### 12.4 Otras decisiones de modelado
+
+- **Efectivo es sensible, no insensible.** §5 lo etiqueta "no sensible / overnight",
+  que son dos cosas distintas. El encaje remunerado repacta de inmediato: es de los
+  activos más sensibles del balance. Lo que no es, es fuente de margen — rinde por
+  debajo de la referencia. Tratarlo como tasa cero regalaba ~60 M de ingreso anual.
+- **Las cohortes amortizables entran por su principal vivo**, no por el monto
+  originado. Una cohorte hipotecaria de hace ocho años ya devolvió cerca de un tercio
+  del principal. Sin ese factor el libro parece más viejo — y más corto — de lo que es.
+- **Duración de pasivos: dos convenciones, reportadas por separado.** La de
+  runoff/contractual (sin ajustar por beta) es la de los objetivos de §6.1; la
+  *efectiva* multiplica por (1−β⁺) y sale bastante más corta. Mezclarlas es lo que hace
+  que dos áreas del mismo banco reporten duraciones de pasivo distintas por un factor
+  de dos y nadie sepa cuál usar.
+- **Los saldos anclan su nivel en la fecha de corte** al share de §5, de modo que la
+  serie histórica y la tabla de instrumentos digan lo mismo el último día.
+- **Las series latentes** (core verdadero, migración) viajan aparte de las
+  observables. El Módulo 2 no debe verlas salvo para reportar su error.
+
+### 12.5 Estado de calibración: 5 de 6 objetivos en rango
+
+| Métrica | Medido | Objetivo §6.1 | |
+|---|---|---|---|
+| Duración activos sensibles | 2,15 a | 2,2 – 2,5 | fuera por 0,05 |
+| Duración pasivos (post-NMD) | 1,84 a | 1,8 – 2,1 | ✓ |
+| Gap de duración | +0,49 a | +0,4 – +0,6 | ✓ |
+| ΔEVE peor / Tier 1 | −11,5% | −9% a −13% | ✓ |
+| ΔNII 12m (+200 pb) | +1,72% | +1,5% – +3,5% | ✓ |
+| NIM | 3,33% | 2,8% – 3,6% | ✓ |
+
+**La tensión pedagógica se sostiene**: ante +200 pb el NII mejora (+1,72%) y el EVE se
+deteriora (−11,5% del Tier 1). Ese signo opuesto es el resultado central del proyecto.
+
+La duración de activos queda 0,05 a por debajo del rango, y **no se movió la meta para
+taparlo** (§6.1 se pre-registró justamente para impedirlo). La causa es identificable:
+con 32,4% de cartera comercial variable que repacta trimestralmente, 4% de efectivo y
+7,2% de tarjetas, el activo de este banco es estructuralmente corto. El desvío es
+sensible a la convención de añejamiento de las cohortes y va al README como tal.
+
+Advertencia sobre estas dos últimas filas: ΔEVE y ΔNII son **aproximaciones de primer
+orden** (duración del gap y gap estático a 12 meses), calculadas como diagnóstico de
+calibración. Los Módulos 3 y 4 las recalculan con proyección y revaluación completas,
+y la diferencia entre ambos métodos es uno de los entregables.
+
+### 12.6 Cómo correr el gate
+
+```
+pip install -r requirements.txt
+python run_module0.py     # exit≠0 si falla algún ERROR; informe en data/
+python -m pytest tests/ -q
+```

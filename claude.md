@@ -39,8 +39,8 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 - [x] Módulo 0 — Implementación y validaciones: **gate superado** (0 ERROR, 1 WARNING).
       Ver §12 para las decisiones tomadas durante la implementación.
 - [x] Módulo 1 — Balance sintético y brecha de repreciación. Ver §13.
-- [ ] Módulo 2 — Modelo de depósitos a la vista (NMD) **← AQUÍ ESTAMOS**
-- [ ] Módulo 3 — Margen financiero (NII)
+- [x] Módulo 2 — Modelo de depósitos a la vista (NMD). Ver §14.
+- [ ] Módulo 3 — Margen financiero (NII) **← AQUÍ ESTAMOS**
 - [ ] Módulo 4 — Valor económico del patrimonio (EVE)
 - [ ] Módulo 5 — Alcance vs. estándar IRRBB
 
@@ -55,6 +55,7 @@ src/data_gen.py        Módulo 0 — generación de datos
 src/validation.py      Módulo 0 — controles de calidad
 run_module0.py         Gate ejecutable: genera → valida → exit≠0 si hay ERROR  [añadido]
 run_module1.py         Informe de brecha de repreciación → data/gap_report.md  [añadido]
+run_module2.py         Informe del modelo conductual de NMD → data/nmd_report.md  [añadido]
 src/balance.py         Módulo 1
 src/deposits.py        Módulo 2
 src/nii.py             Módulo 3
@@ -495,4 +496,123 @@ Corregir sólo la primera dejaría el EVE del Módulo 4 igual de mal.
 
 ```
 python run_module1.py     # informe en data/gap_report.md
+```
+
+## 14. Módulo 2 — Modelo conductual de NMD
+
+`src/deposits.py`, `run_module2.py` → `data/nmd_report.md`. 158 tests en verde.
+
+### 14.1 La beta se recupera; el plazo no
+
+| Producto | β̂⁺ | real | error | β̂⁻ | real | error | R² |
+|---|---|---|---|---|---|---|---|
+| vista | 0,275 | 0,25 | +0,025 | 0,505 | 0,55 | −0,045 | 0,81 |
+| ahorro | 0,466 | 0,45 | +0,016 | 0,744 | 0,75 | −0,006 | 0,94 |
+| plazo | 0,848 | 0,85 | −0,002 | 0,938 | 0,90 | +0,038 | 0,98 |
+
+Estimador: `Δd_t = a₀ + Σa_k·Δr⁺_{t−k} + Σb_k·Δr⁻_{t−k}`, 12 rezagos. Separar la parte
+positiva de la negativa es lo único que hace visible la asimetría; los 12 rezagos son
+necesarios porque con λ = 0,30 sólo un tercio del traspaso ocurre en el mes del
+movimiento.
+
+Proporción estable (destendenciada, mínimo de la muestra): **0,897** vista y **0,913**
+ahorro, contra `core_share` estructural de 0,85 y 0,90. La sobreestimación no es ruido:
+el estimador mide *lo que no se va en volumen* y el parámetro describe *composición*.
+
+### 14.2 El hallazgo: la vida del núcleo no es identificable
+
+Cuatro bancos idénticos salvo la vida promedio **verdadera** del núcleo de vista:
+
+| Vida verdadera | Correlación vs. base | Dif. relativa máx. |
+|---|---|---|
+| 3,0 a | 0,999994 | 0,11% |
+| 6,0 a | 0,999997 | 0,09% |
+| 10,0 a | 0,999987 | 0,17% |
+
+Una vida de 3 años y una de 10 producen la misma serie observable. **No es
+identificación débil: es información cero.** El saldo agregado es la suma de un stock
+que se va y otro que entra, y no permite separar los dos flujos.
+
+**Esto corrige §12.4.** Allí argumenté que la construcción runoff + originación hacía
+λ recuperable. La hace *estructural*, no *identificable desde el agregado*.
+
+Y es el argumento de fondo de por qué IRRBB **acota** el plazo del núcleo en vez de
+pedir una estimación mejor: es un parámetro que el banco no puede falsar con los datos
+que suele tener, y que además empuja el EVE en la dirección que al banco le conviene —
+un núcleo más largo abarata el descalce en el papel. Los topes no son conservadurismo
+arbitrario, son la respuesta correcta a un problema de identificación.
+
+**Consecuencia de método**: cuando un parámetro no está identificado, el entregable
+honesto no es un número puntual sino el rango que produce. La sensibilidad deja de ser
+un apéndice.
+
+### 14.3 Tres plazos distintos, tres preguntas distintas
+
+| Concepto | Pregunta | Vista |
+|---|---|---|
+| Vida de volumen | ¿cuánto tarda en irse el dinero? | 4,0 a supuesto (real 4,2) |
+| Plazo de réplica | ¿cuánto tarda en repactar el precio? | 0,37 a estimado |
+| Plazo IRRBB del núcleo | ¿qué asigno a bandas para EVE? | 4,0 a (tope 5,0) |
+
+El portafolio de réplica se publica **como contraste, no como insumo**. Usarlo para
+asignar bandas mandaría los 22.000 M a la banda corta y dejaría el gap tan mal
+especificado como en el Módulo 1.
+
+**La vida supuesta no sale del ground truth** (4,0 y 3,5 contra 4,2 y 3,0 reales).
+Copiar el valor verdadero fabricaría un acierto.
+
+### 14.4 Núcleo bajo el marco estandarizado
+
+`núcleo = estable × (1 − β⁺)`, luego topes por categoría de cliente:
+
+| Producto | Estable | β⁺ | Núcleo | Tope | ¿Muerde? |
+|---|---|---|---|---|---|
+| vista (minorista transaccional) | 0,897 | 0,275 | 0,651 | 0,90 / 5,0 a | no |
+| ahorro (minorista no transaccional) | 0,913 | 0,466 | 0,488 | 0,70 / 4,5 a | no |
+
+El paso `× (1 − β)` es la nota conceptual de §6.5 hecha operación: la porción que no
+repacta no es la que no se va.
+
+### 14.5 El gap corregido — y hasta dónde llega
+
+| Tratamiento de los NMD | Gap acum. 12m | Sobre activos | Estado |
+|---|---|---|---|
+| Contractual (Módulo 1) | −10.280 M | −20,6% | **ALERTA** |
+| Conductual (Módulo 2) | −675 M | −1,3% | **DENTRO DE POLÍTICA** |
+
+De un descalce que exigiría plan de acción a un banco esencialmente calzado. Lo que
+cambió no fue el balance: fue reconocer que de una subida de 100 pb el banco traslada
+del orden de 27 pb a las cuentas transaccionales, no 100.
+
+**Sin sobreafirmar.** El gap conductual sigue levemente negativo mientras el margen
+mejora (+1,72%). Un gap cercano a cero es *compatible* con eso, pero no lo predice, y
+la razón es estructural: **cualquier** análisis de brechas trata cada peso que repacta
+dentro de su banda como si trasladara el 100% del choque. El modelo conductual arregla
+el *momento* y la *proporción*; no puede arreglar que dentro de la banda el traspaso se
+suponga completo. El gap pasó de mal especificado a bien especificado — y sigue siendo
+una aproximación de primer orden. El signo del margen sale de proyectarlo: Módulo 3.
+Está bajo test (`test_el_gap_conductual_sigue_sin_predecir_el_signo_del_margen`).
+
+### 14.6 Sensibilidad: el entregable
+
+| Vida supuesta | Vista aplicada | ¿Tope muerde? | Gap 12m / activos |
+|---|---|---|---|
+| 2,0 a | 2,0 a | no | −5,4% |
+| 3,0 a | 3,0 a | no | −2,6% |
+| 4,0 a | 4,0 a | no | −1,1% |
+| 5,0 a | 5,0 a | sí (ahorro) | −0,2% |
+| 7,0 a | **5,0 a** | sí | **−0,2%** |
+
+El rango honesto del gap a 12 meses es **−5,4% a −0,2%**. Y la última fila es el
+exhibit: **a partir de 5 años el resultado se congela**, porque el tope impide seguir
+estirando el supuesto. Ahí se ve exactamente qué compra la regulación.
+
+Otros dos ejes: la proporción estable ±10 pp mueve el gap entre −3,5% y +0,7%; usar β̄
+en lugar de β⁺ para el corte lo lleva de −1,3% a −5,2%. Elegir la beta del corte no es
+un detalle técnico.
+
+### 14.7 Cómo correrlo
+
+```
+python run_module2.py     # informe en data/nmd_report.md
 ```

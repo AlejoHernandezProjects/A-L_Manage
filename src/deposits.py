@@ -136,6 +136,11 @@ def estimar_beta_asimetrica(
         filas.append(
             {
                 "producto": prod,
+                # Los coeficientes individuales, no sólo su suma: son el perfil
+                # mensual con que el traspaso se materializa, y el Módulo 3 lo usa
+                # para no suponer que la beta entera llega el primer mes.
+                "coef_up": beta[1:1 + L].copy(),
+                "coef_down": beta[1 + L:].copy(),
                 "beta_up_est": b_up,
                 "beta_up_real": verdad["beta_up"],
                 "error_up": b_up - verdad["beta_up"],

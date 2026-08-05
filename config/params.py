@@ -649,6 +649,116 @@ sólo un tercio del traspaso ocurre en el mes del movimiento (λ = 0,30 en vista
 """
 
 # ---------------------------------------------------------------------------
+# 6quater. Escenarios de choque IRRBB (Módulos 3 y 4)
+# ---------------------------------------------------------------------------
+
+IRRBB_SHOCKS_PB = {
+    "paralelo": 200.0,
+    "cortas": 300.0,
+    "largas": 150.0,
+}
+"""Magnitud de los choques prescritos, en puntos básicos.
+
+Son los de la fila **USD** de la tabla de calibración del estándar (Comité de
+Basilea, 2016). El estándar fija una magnitud distinta por moneda —de 100 pb para el
+yen a 400 pb para monedas de economías volátiles— porque el choque debe representar
+un percentil comparable de la distribución histórica de tasas de *esa* moneda, no un
+número redondo universal.
+
+Esta elección es la que más mueve el resultado final del proyecto: de ella depende
+si el banco rompe el umbral del 15% del Tier 1 en el Módulo 4.
+"""
+
+IRRBB_SHOCK_PARAMS = {
+    "x_decaimiento_a": 4.0,
+    "empinamiento_corto": 0.65,
+    "empinamiento_largo": 0.90,
+    "aplanamiento_corto": 0.80,
+    "aplanamiento_largo": 0.60,
+}
+"""Parámetros de forma de los escenarios rotacionales.
+
+El escalar ``S(t) = e^{−t/4}`` reparte el choque entre tramos: vale 1 en el plazo
+inmediato y se apaga hacia el largo. ``S_largo(t) = 1 − S(t)`` hace lo contrario.
+
+Los factores 0,65 / 0,90 / 0,80 / 0,60 los fija el estándar y no son simétricos a
+propósito: una curva no se empina y se aplana con la misma intensidad en cada tramo.
+Reproducirlos tal cual —en vez de "simplificar" a ±1— importa, porque el peor de los
+seis escenarios suele ser uno rotacional y su magnitud depende de estos números.
+"""
+
+POST_SHOCK_FLOOR = {
+    "nivel_inicial_pb": -100.0,
+    "pendiente_pb_por_ano": 5.0,
+    "tope": 0.0,
+}
+"""Suelo post-choque: −100 pb en el plazo inmediato, subiendo 5 pb por año hasta 0%
+a los 20 años y de ahí en adelante.
+
+Existe porque el escenario de bajada aplicado a una curva ya baja produciría tasas
+absurdamente negativas, y el EVE resultante sería un artefacto aritmético. Que el
+suelo sea **negativo** y no cero es reconocimiento explícito de que las tasas
+nominales negativas ocurrieron de verdad en varias monedas: el estándar no pretende
+que sean imposibles, sólo acota cuánto.
+"""
+
+ESCENARIOS_NII = ("paralelo_arriba", "paralelo_abajo")
+ESCENARIOS_EVE = (
+    "paralelo_arriba",
+    "paralelo_abajo",
+    "empinamiento",
+    "aplanamiento",
+    "cortas_arriba",
+    "cortas_abajo",
+)
+"""Convención de §8: el NII usa típicamente sólo los dos paralelos y el EVE los seis.
+
+La razón no es pereza. El margen a 12 meses depende casi por completo del tramo corto
+—que es donde repacta el balance dentro del horizonte— y los escenarios rotacionales
+se distinguen entre sí sobre todo en el tramo largo, que apenas entra. El EVE, en
+cambio, descuenta flujos a 20 años y ahí la forma de la curva es todo.
+
+Ambas listas son configurables y el Módulo 3 calcula los seis igualmente; la
+convención decide qué se titula, no qué se computa.
+"""
+
+NII_PARAMS = {
+    "horizonte_meses": 12,
+    "regla_balance": "constante",
+    "crecimiento_anual": 0.0,
+    "traspaso": "rezagos",
+    "beta_activos": 1.0,
+    "beta_mercado": 1.0,
+    "piso_tasa_pasivo": 0.0,
+}
+"""Supuestos de la proyección de margen.
+
+**Balance constante y margen constante.** Es el supuesto regulatorio estándar para
+ΔNII: el balance no crece ni cambia de composición, y lo que vence se reinvierte en
+el mismo producto conservando su spread sobre la curva. Cada instrumento mantiene su
+propio spread y sólo se mueve la curva. Conviene tenerlo presente al leer los
+resultados: un banco real respondería al choque cambiando de estrategia comercial, y
+el ΔNII no pretende predecir eso — mide la sensibilidad del balance *actual*.
+
+`traspaso = "rezagos"` usa el perfil mensual que el Módulo 2 estimó, en vez de aplicar
+la beta entera desde el primer mes. Con λ = 0,30 en vista, suponer traspaso inmediato
+sobrestima el costo de fondeo del primer trimestre de forma apreciable.
+
+`beta_activos = 1` supone que el activo repacta al mercado sin fricción. Es razonable
+para cartera indexada e inversiones; en cartera minorista administrada (tarjetas) hay
+rigidez real, y el barrido de sensibilidad muestra cuánto importaría.
+
+**`piso_tasa_pasivo` es la restricción que más importa de esta lista.** Un banco no
+puede cobrarle al minorista por depositar: la tasa pagada se detiene en cero. Y es
+justo lo que apaga la ganancia asimétrica del banco en escenarios de bajada — β⁻ sólo
+paga mientras quede tasa que recortar. Con la referencia en 3,2% este banco tiene
+margen de sobra; el mismo balance partiendo del 1% vería desaparecer buena parte del
+beneficio del escenario a la baja. Es la razón por la que las franquicias de depósitos
+valen mucho menos en un entorno de tasas cero, y por la que la banca europea y japonesa
+pasó una década sin poder monetizarlas.
+"""
+
+# ---------------------------------------------------------------------------
 # 7. Objetivos de calibración (§6.1) — criterios de aceptación
 # ---------------------------------------------------------------------------
 
@@ -741,6 +851,8 @@ _EXPORTABLES = (
     "CURVE", "DEPOSIT_RATES", "NMD_PARAMS", "N_COHORTES_OBJETIVO", "INSTRUMENT_SPECS",
     "IRRBB_BANDS", "BANDAS_ALCO", "GAP_THRESHOLDS",
     "IRRBB_NMD_CAPS", "NMD_CLIENTE", "NMD_ESTIMATION",
+    "IRRBB_SHOCKS_PB", "IRRBB_SHOCK_PARAMS", "POST_SHOCK_FLOOR",
+    "ESCENARIOS_NII", "ESCENARIOS_EVE", "NII_PARAMS",
     "CALIBRATION_TARGETS", "VALIDATION_THRESHOLDS", "SENSITIVITY_GRID",
     "ROOT", "DATA_DIR", "GROUND_TRUTH_PATH",
 )

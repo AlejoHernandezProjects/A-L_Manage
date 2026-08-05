@@ -48,12 +48,13 @@ def continuous_to_nominal(y, pagos_por_anio: int = 12):
 
     Args:
         y: Tasa continua (escalar o arreglo).
-        pagos_por_anio: Número de pagos al año.
+        pagos_por_anio: Número de pagos al año. Admite arreglo, para convertir de
+            golpe una cartera cuyos instrumentos pagan con frecuencias distintas.
 
     Returns:
         Tasa nominal anual equivalente.
     """
-    m = float(pagos_por_anio)
+    m = np.asarray(pagos_por_anio, dtype=float)
     return m * (np.exp(np.asarray(y, dtype=float) / m) - 1.0)
 
 

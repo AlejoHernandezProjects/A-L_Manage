@@ -40,8 +40,8 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
       Ver §12 para las decisiones tomadas durante la implementación.
 - [x] Módulo 1 — Balance sintético y brecha de repreciación. Ver §13.
 - [x] Módulo 2 — Modelo de depósitos a la vista (NMD). Ver §14.
-- [ ] Módulo 3 — Margen financiero (NII) **← AQUÍ ESTAMOS**
-- [ ] Módulo 4 — Valor económico del patrimonio (EVE)
+- [x] Módulo 3 — Margen financiero (NII) + `src/scenarios.py`. Ver §15.
+- [ ] Módulo 4 — Valor económico del patrimonio (EVE) **← AQUÍ ESTAMOS**
 - [ ] Módulo 5 — Alcance vs. estándar IRRBB
 
 ## 4. Estructura del repositorio
@@ -56,6 +56,7 @@ src/validation.py      Módulo 0 — controles de calidad
 run_module0.py         Gate ejecutable: genera → valida → exit≠0 si hay ERROR  [añadido]
 run_module1.py         Informe de brecha de repreciación → data/gap_report.md  [añadido]
 run_module2.py         Informe del modelo conductual de NMD → data/nmd_report.md  [añadido]
+run_module3.py         Informe de margen financiero → data/nii_report.md  [añadido]
 src/balance.py         Módulo 1
 src/deposits.py        Módulo 2
 src/nii.py             Módulo 3
@@ -615,4 +616,88 @@ un detalle técnico.
 
 ```
 python run_module2.py     # informe en data/nmd_report.md
+```
+
+## 15. Módulo 3 — Margen financiero (NII)
+
+`src/scenarios.py` (los seis, definidos UNA vez), `src/nii.py`, `run_module3.py` →
+`data/nii_report.md`. 202 tests en verde.
+
+Choques: calibración **USD** del estándar — paralelo 200 pb, cortas 300, largas 150.
+Suelo post-choque de −100 pb subiendo 5 pb/año hasta 0% a los 20 años.
+
+### 15.1 ΔNII a 12 meses — NII base 1.566 M
+
+| Escenario | Δ% | | Escenario | Δ% |
+|---|---|---|---|---|
+| **Paralelo arriba** | **+2,77%** | | Aplanamiento | +4,44% |
+| **Paralelo abajo** | **+4,13%** | | Cortas arriba | +5,17% |
+| Empinamiento | +2,22% | | Cortas abajo | +2,26% |
+
+### 15.2 El resultado: el banco gana en las dos direcciones
+
+Ante +200 pb el margen mejora. Ante −200 pb **también**. Un choque simétrico subiendo
+el margen en ambos sentidos parece error de signo; no lo es. En la bajada el ingreso
+cae 343 M pero **el costo de fondeo cae 407 M**.
+
+El mecanismo es la asimetría del Módulo 2: al subir el banco traslada β⁺ ≈ 0,28 y
+retiene el resto; al bajar traslada β⁻ ≈ 0,51 y se queda la diferencia. **Es una
+posición larga en volatilidad de tasas**: la franquicia de depósitos no es sólo fondeo
+barato, es una opción del banco contra sus depositantes que paga en ambos sentidos.
+
+| Beta usada | Paralelo arriba | Paralelo abajo |
+|---|---|---|
+| Asimétrica (β̂⁺ / β̂⁻) | +2,77% | +4,13% |
+| Simétrica (promedio) | **+0,05%** | +1,10% |
+
+Con beta única la ganancia **no se reparte mal: se borra**, y el banco parece neutral
+al riesgo de tasa en el margen. Ésa es la respuesta a por qué el Módulo 2 estimó dos
+betas.
+
+### 15.3 La acotación: el piso de la tasa de depósito
+
+β⁻ sólo paga mientras quede tasa que recortar. Un banco no puede cobrarle al minorista
+por depositar.
+
+| Nivel de partida (3M) | ΔNII arriba | ΔNII abajo | Holgura al piso |
+|---|---|---|---|
+| 3,27% (hoy) | +2,77% | **+4,13%** | **5 pb** |
+| 2,27% | +2,96% | +0,45% | 0 pb |
+| 1,27% | +3,18% | **−10,26%** | 0 pb |
+| 0,27% | +3,70% | **−12,46%** | 0 pb |
+
+Al banco le quedan **5 pb** de holgura antes de que el producto más barato choque
+contra cero. Es la razón por la que una franquicia de depósitos vale mucho menos en un
+entorno de tasas cero, y por la que la banca europea y japonesa pasó una década sin
+poder monetizar la suya. Reportar el ΔNII sin esta acotación vendería como estructural
+una ganancia que depende del nivel de partida.
+
+### 15.4 Reconciliación con el Módulo 0
+
+| Método | ΔNII (+200 pb) |
+|---|---|
+| Gap estático a 12 meses (Módulo 0) | +1,72% |
+| Proyección completa (Módulo 3) | +2,77% |
+
+Miden lo mismo por caminos distintos. Coincidir en signo y orden de magnitud es la
+validación; diferir en signo indicaría un error en uno de los dos. Bajo test.
+
+### 15.5 Decisiones de diseño
+
+- **Balance constante y margen constante**: cada instrumento conserva su spread sobre
+  la curva y sólo se mueve la curva. Es el estándar regulatorio; no predice cómo
+  respondería un banco real, mide la sensibilidad del balance *actual*.
+- **Traspaso con rezagos**: los coeficientes de rezago del Módulo 2 **son** el perfil
+  mensual de traspaso. Suponerlo inmediato sobrestima el costo de fondeo del primer
+  trimestre y sesga el ΔNII a la baja. Bajo test.
+- **Los seis se calculan siempre**; la convención de §8 decide qué se titula, no qué se
+  computa.
+- **`src/scenarios.py` es la única fuente de verdad** sobre qué significa cada
+  escenario. El Módulo 4 lo consume sin redefinir nada — es lo que permite poner NII y
+  EVE en la misma fila del informe al comité sin comparar peras con manzanas.
+
+### 15.6 Cómo correrlo
+
+```
+python run_module3.py     # informe en data/nii_report.md
 ```

@@ -41,8 +41,8 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 - [x] Módulo 1 — Balance sintético y brecha de repreciación. Ver §13.
 - [x] Módulo 2 — Modelo de depósitos a la vista (NMD). Ver §14.
 - [x] Módulo 3 — Margen financiero (NII) + `src/scenarios.py`. Ver §15.
-- [ ] Módulo 4 — Valor económico del patrimonio (EVE) **← AQUÍ ESTAMOS**
-- [ ] Módulo 5 — Alcance vs. estándar IRRBB
+- [x] Módulo 4 — Valor económico del patrimonio (EVE). Ver §16.
+- [ ] Módulo 5 — Alcance vs. estándar IRRBB **← AQUÍ ESTAMOS**
 
 ## 4. Estructura del repositorio
 
@@ -57,6 +57,7 @@ run_module0.py         Gate ejecutable: genera → valida → exit≠0 si hay ER
 run_module1.py         Informe de brecha de repreciación → data/gap_report.md  [añadido]
 run_module2.py         Informe del modelo conductual de NMD → data/nmd_report.md  [añadido]
 run_module3.py         Informe de margen financiero → data/nii_report.md  [añadido]
+run_module4.py         Informe de valor económico → data/eve_report.md  [añadido]
 src/balance.py         Módulo 1
 src/deposits.py        Módulo 2
 src/nii.py             Módulo 3
@@ -700,4 +701,101 @@ validación; diferir en signo indicaría un error en uno de los dos. Bajo test.
 
 ```
 python run_module3.py     # informe en data/nii_report.md
+```
+
+## 16. Módulo 4 — Valor económico del patrimonio (EVE)
+
+`src/eve.py`, `run_module4.py` → `data/eve_report.md`. 228 tests en verde.
+
+EVE base **4.500 M** (= patrimonio contable, por construcción) · Tier 1 4.000 M ·
+umbral del *outlier test* −600 M.
+
+### 16.1 El resultado que el proyecto existe para demostrar
+
+| Escenario | ΔNII 12m | ΔEVE / Tier 1 | ¿Outlier? |
+|---|---|---|---|
+| **Paralelo arriba** | **+2,77%** | **−17,0%** | **SÍ** ⟵ peor |
+| Paralelo abajo | +4,13% | +19,9% | no |
+| Empinamiento | +2,22% | −7,7% | no |
+| Aplanamiento | +4,44% | +3,9% | no |
+| Cortas arriba | +5,17% | −4,0% | no |
+| Cortas abajo | +2,26% | +4,1% | no |
+
+**Ante +200 pb el margen mejora y el valor económico se deteriora.** Son dos
+horizontes: el NII mira quién repacta antes, el EVE mira quién tiene más duración.
+Este banco cobra rápido en el activo indexado y paga despacio en sus depósitos —gana
+margen— mientras carga 9.000 M de hipotecas fijas originadas con la referencia en
+1,5% —pierde valor—. Gestionar solo por NII llevaría a celebrar una subida que le
+está destruyendo patrimonio. Bajo test en `test_la_tension_central_del_proyecto`.
+
+### 16.2 Convención: calibración a la par
+
+Para cada instrumento se resuelve el spread `s` tal que `VP(flujos, curva + s) = saldo`
+hoy. Así el EVE de partida no inventa plusvalías latentes y el choque mueve **solo la
+parte libre de riesgo**: el ΔEVE es riesgo de tasa puro, no una mezcla con crédito.
+
+**Flujos de repreciación, no contractuales.** Un crédito comercial a 5 años que repacta
+cada trimestre vuelve a valer su nominal en cada reset. Valorarlo hasta vencimiento
+—como hice en la primera versión— infla la duración del activo de 1,98 a 2,96 años y
+lleva el ΔEVE de −17% a −37%. Es la misma regla del gap del Módulo 1, y esa coherencia
+no es opcional: si gap y EVE usaran horizontes distintos describirían balances
+distintos. Bajo test.
+
+### 16.3 Duración y convexidad: dónde falla lo lineal
+
+Duración efectiva (por diferencias finitas, no analítica, porque los flujos de los NMD
+salen de un modelo de comportamiento): activo **1,98 a**, pasivo **1,37 a**, gap
+**+0,74 a**.
+
+| Choque | Revaluación completa | 1er orden | 2do orden | Error lineal |
+|---|---|---|---|---|
+| +50 pb | −181 | −184 | −180 | −2,0% |
+| +200 pb | −682 | −736 | −679 | −8,0% |
+| +400 pb | −1.265 | −1.472 | −1.244 | −16,4% |
+| +800 pb | −2.190 | −2.944 | −2.033 | **−34,4%** |
+
+El error crece con el **cuadrado** del choque. Es el argumento cuantitativo de por qué
+un límite de ALM expresado solo en duración es insuficiente para estrés: mide bien el
+riesgo del día a día y subestima justo el que motiva tener límites. La convexidad
+recupera casi todo.
+
+### 16.4 Reconciliación con el Módulo 0 — un error conceptual costoso
+
+El diagnóstico del Módulo 0 daba **−11,5%**; aquí sale **−17,0%**. La diferencia no es
+de método sino **de definición de núcleo**.
+
+Aquel diagnóstico usaba el núcleo **de volumen** (0,90 en vista) como si fuera el de
+repreciación. IRRBB define el núcleo como la porción que **no repacta**: estable ×
+(1−β) = **0,65**. Un cuarto del depósito a la vista es dinero que se queda **y aun así
+sigue a la tasa de mercado**.
+
+Es exactamente la nota de §6.5, y aquí se ve cuánto cuesta ignorarla: casi seis puntos
+de Tier 1, la diferencia entre pasar el *outlier test* y no pasarlo. El objetivo
+pre-registrado de §6.1 (−9% a −13%) **no se cumple**, y no se movió la meta: el rango
+se fijó sobre una definición de núcleo que resultó ser la equivocada.
+
+### 16.5 El hallazgo que cierra el proyecto
+
+| Vida supuesta del núcleo | Aplicada | ΔEVE / Tier 1 | ¿Outlier? |
+|---|---|---|---|
+| 2,0 a | 2,0 a | −26,5% | SÍ |
+| 3,0 a | 3,0 a | −21,1% | SÍ |
+| 4,0 a (caso base) | 4,0 a | −16,0% | SÍ |
+| 5,0 a | 5,0 a | −12,2% | **no** |
+| 7,0 a | **5,0 a (tope)** | −12,2% | **no** |
+
+**El veredicto regulatorio cambia dentro del rango de un supuesto que el Módulo 2
+demostró no identificable desde los datos.** El banco es o no es *outlier* según una
+hipótesis que no puede falsar.
+
+Y ahí se ve para qué sirve el tope de 5 años: es lo único que impide al banco
+suponerse fuera del problema. Con el tope, el mejor caso alcanzable es −12,2% — justo
+por debajo del umbral. El supervisor acotó exactamente el margen de maniobra que
+importaba. Bajo test en
+`test_el_veredicto_regulatorio_depende_del_supuesto_no_identificado`.
+
+### 16.6 Cómo correrlo
+
+```
+python run_module4.py     # informe en data/eve_report.md
 ```

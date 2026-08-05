@@ -586,6 +586,69 @@ lo que un ALCO hace es decidir.
 """
 
 # ---------------------------------------------------------------------------
+# 6ter. Modelo conductual de NMD (Módulo 2)
+# ---------------------------------------------------------------------------
+
+IRRBB_NMD_CAPS = {
+    "minorista_transaccional": {"cap_core": 0.90, "cap_vida_a": 5.0},
+    "minorista_no_transaccional": {"cap_core": 0.70, "cap_vida_a": 4.5},
+    "mayorista": {"cap_core": 0.50, "cap_vida_a": 4.0},
+}
+"""Topes del marco estandarizado IRRBB para depósitos sin vencimiento.
+
+El regulador limita dos cosas a la vez: **qué proporción** del depósito puede
+declararse núcleo y **con qué plazo medio** puede asignarse a bandas.
+
+Por qué existen estos topes, y es el punto conceptual del Módulo 2: el plazo
+conductual del núcleo **no es estimable** a partir del saldo agregado. Series
+generadas con vidas verdaderas de 3 y de 10 años son indistinguibles en la práctica
+(correlación 0,99999). Ante un parámetro que el banco no puede falsar con los datos
+que tiene, y que además empuja el EVE en la dirección que al banco le conviene —un
+núcleo más largo abarata el descalce en el papel—, el supervisor no pide una
+estimación mejor: acota el rango. Los topes no son conservadurismo arbitrario, son la
+respuesta correcta a un problema de identificación.
+"""
+
+NMD_CLIENTE = {
+    "vista": "minorista_transaccional",
+    "ahorro": "minorista_no_transaccional",
+}
+"""Categoría de cliente de cada producto NMD, que determina qué topes aplican.
+
+`vista` es transaccional (nómina, pagos, domiciliaciones): el cliente lo tiene por
+servicio, no por precio, y por eso su beta es baja y su tope generoso. `ahorro` es
+minorista no transaccional: mismo cliente, pero saldo que sí compara precio.
+"""
+
+NMD_ESTIMATION = {
+    "rezagos_beta": 12,
+    "ventana_estable_m": 12,
+    "percentil_estable": 0.05,
+    "tramos_replica_m": [1, 3, 6, 12, 24, 36, 60],
+    "vida_supuesta_a": {"vista": 4.0, "ahorro": 3.5},
+    "beta_para_corte": "beta_up",
+    "sensibilidad_vida_a": [2.0, 3.0, 4.0, 5.0, 7.0],
+    "sensibilidad_estable_delta": [-0.10, -0.05, 0.0, 0.05, 0.10],
+    "vidas_diagnostico_a": [3.0, 4.2, 6.0, 10.0],
+}
+"""Parámetros de estimación y de supuesto del Módulo 2.
+
+**`vida_supuesta_a` es un SUPUESTO, no una estimación, y deliberadamente no coincide
+con el ground truth** (4,2 y 3,0 años). Son los números redondos que un comité de
+activos y pasivos elegiría a partir de benchmarks de industria y guía supervisora.
+Copiar el valor verdadero fabricaría un acierto y vaciaría de contenido el ejercicio:
+el error contra el ground truth es precisamente lo que el módulo debe reportar.
+
+`beta_para_corte` fija qué beta separa núcleo de no núcleo. Se usa la de **subida**:
+el escenario que preocupa para el EVE es el de tasas al alza, y ahí el traspaso
+relevante es β⁺. Usar la de largo plazo daría un núcleo menor y un banco que parece
+más descalzado; el barrido de sensibilidad muestra ambas.
+
+`rezagos_beta` = 12 porque con ajuste parcial la respuesta se reparte en el tiempo:
+sólo un tercio del traspaso ocurre en el mes del movimiento (λ = 0,30 en vista).
+"""
+
+# ---------------------------------------------------------------------------
 # 7. Objetivos de calibración (§6.1) — criterios de aceptación
 # ---------------------------------------------------------------------------
 
@@ -677,6 +740,7 @@ _EXPORTABLES = (
     "SEED", "DATES", "CONVENTIONS", "BANK_PROFILE", "RATE_REGIMES", "POLICY_RATE",
     "CURVE", "DEPOSIT_RATES", "NMD_PARAMS", "N_COHORTES_OBJETIVO", "INSTRUMENT_SPECS",
     "IRRBB_BANDS", "BANDAS_ALCO", "GAP_THRESHOLDS",
+    "IRRBB_NMD_CAPS", "NMD_CLIENTE", "NMD_ESTIMATION",
     "CALIBRATION_TARGETS", "VALIDATION_THRESHOLDS", "SENSITIVITY_GRID",
     "ROOT", "DATA_DIR", "GROUND_TRUTH_PATH",
 )

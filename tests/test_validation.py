@@ -206,10 +206,37 @@ def test_la_duracion_efectiva_de_pasivos_es_menor_que_la_de_runoff(bundle, cfg):
     assert m["duracion_pasivos_efectiva_a"] < m["duracion_pasivos_sensibles_a"]
 
 
-def test_el_eve_no_supera_el_umbral_de_alerta_supervisora(bundle, cfg):
-    """El outlier test de IRRBB: ΔEVE peor escenario contra 15% del Tier 1."""
+def test_el_banco_supera_el_umbral_de_alerta_supervisora(bundle, cfg):
+    """El *outlier test* de IRRBB: peor ΔEVE contra el 15% del Tier 1. **Este banco lo
+    supera**, y ése es el resultado headline del proyecto.
+
+    Este test afirmaba lo contrario hasta la revisión final, cuando el diagnóstico usaba
+    la duración de pasivo sin ajustar por beta y daba −11,5%. No estaba comprobando una
+    propiedad del modelo: estaba fijando una creencia sobre el resultado. Corregida la
+    definición de núcleo, el diagnóstico da −21,9% y el Módulo 4 confirma −17,0% por
+    revaluación completa.
+
+    La lección va al README: un test que codifica el resultado esperado en vez de una
+    invariante deja de avisar justo cuando el resultado cambia."""
     m = calibration_metrics(bundle, cfg)
-    assert m["delta_eve_peor_sobre_tier1"] > -0.15
+    assert m["delta_eve_peor_sobre_tier1"] <= -0.15
+
+
+def test_el_diagnostico_usa_la_duracion_de_pasivo_ajustada_por_beta(bundle, cfg):
+    """La duración de runoff trata como núcleo todo el saldo que no se va; IRRBB define
+    el núcleo como el que no **repacta**. Usar la primera hace parecer al banco más
+    cubierto de lo que está — y un control de validación que halaga al balance es peor
+    que no tenerlo."""
+    m = calibration_metrics(bundle, cfg)
+    tier1 = cfg.BANK_PROFILE["tier1_musd"]
+    a, p = m["activos_sensibles_musd"], m["pasivos_sensibles_musd"]
+
+    con_efectiva = -0.02 * (m["duracion_activos_sensibles_a"] * a - m["duracion_pasivos_efectiva_a"] * p)
+    con_runoff = -0.02 * (m["duracion_activos_sensibles_a"] * a - m["duracion_pasivos_sensibles_a"] * p)
+
+    assert m["delta_eve_up200_musd"] == pytest.approx(con_efectiva, rel=1e-9)
+    assert con_runoff > con_efectiva  # la de runoff es la que halaga
+    assert con_runoff / tier1 > -0.15 > con_efectiva / tier1  # y cambiaba el veredicto
 
 
 def test_un_balance_calzado_da_delta_eve_cercano_a_cero(bundle, cfg):

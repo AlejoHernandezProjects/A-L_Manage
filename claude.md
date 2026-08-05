@@ -42,7 +42,9 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 - [x] Módulo 2 — Modelo de depósitos a la vista (NMD). Ver §14.
 - [x] Módulo 3 — Margen financiero (NII) + `src/scenarios.py`. Ver §15.
 - [x] Módulo 4 — Valor económico del patrimonio (EVE). Ver §16.
-- [ ] Módulo 5 — Alcance vs. estándar IRRBB **← AQUÍ ESTAMOS**
+- [x] Módulo 5 — Alcance vs. estándar IRRBB → `README.md`. Ver §17.
+
+**Proyecto completo.** `README.md` es el documento de entrada.
 
 ## 4. Estructura del repositorio
 
@@ -403,12 +405,13 @@ esos 4,2 fueran half-life, la vida promedio sería 6,06 años y el core verdader
 | Duración activos sensibles | 2,15 a | 2,2 – 2,5 | fuera por 0,05 |
 | Duración pasivos (post-NMD) | 1,84 a | 1,8 – 2,1 | ✓ |
 | Gap de duración | +0,49 a | +0,4 – +0,6 | ✓ |
-| ΔEVE peor / Tier 1 | −11,5% | −9% a −13% | ✓ |
+| ΔEVE peor / Tier 1 | **−21,9%** | −9% a −13% | **fuera** (ver §17) |
 | ΔNII 12m (+200 pb) | +1,72% | +1,5% – +3,5% | ✓ |
 | NIM | 3,33% | 2,8% – 3,6% | ✓ |
 
 **La tensión pedagógica se sostiene**: ante +200 pb el NII mejora (+1,72%) y el EVE se
-deteriora (−11,5% del Tier 1). Ese signo opuesto es el resultado central del proyecto.
+deteriora (−21,9% del Tier 1 en primer orden; −17,0% por revaluación completa en el
+Módulo 4). Ese signo opuesto es el resultado central del proyecto.
 
 La duración de activos queda 0,05 a por debajo del rango, y **no se movió la meta para
 taparlo** (§6.1 se pre-registró justamente para impedirlo). La causa es identificable:
@@ -761,8 +764,14 @@ recupera casi todo.
 
 ### 16.4 Reconciliación con el Módulo 0 — un error conceptual costoso
 
-El diagnóstico del Módulo 0 daba **−11,5%**; aquí sale **−17,0%**. La diferencia no es
-de método sino **de definición de núcleo**.
+El diagnóstico del Módulo 0 daba **−21,9%** (primer orden); aquí sale **−17,0%** por
+revaluación completa, y la diferencia es el error de la aproximación lineal (§16.3).
+
+Antes de la revisión final ese diagnóstico daba **−11,5%** y el objetivo de §6.1 «se
+cumplía». Usaba la duración de pasivo **sin ajustar por beta** — el núcleo de volumen
+en lugar del de repreciación — cuando la propia función ya calculaba la versión
+correcta al lado. Corregido en `calibration_metrics`; un control de validación que
+halaga al balance es peor que no tenerlo. La diferencia es **de definición de núcleo**.
 
 Aquel diagnóstico usaba el núcleo **de volumen** (0,90 en vista) como si fuera el de
 repreciación. IRRBB define el núcleo como la porción que **no repacta**: estable ×
@@ -799,3 +808,58 @@ importaba. Bajo test en
 ```
 python run_module4.py     # informe en data/eve_report.md
 ```
+
+## 17. Módulo 5 — Alcance vs. IRRBB, y revisión crítica final
+
+El entregable es `README.md`: problema, resultados, los cinco hallazgos, alcance
+implementado y —la parte que importa en entrevista— **qué quedó fuera y por qué**, con
+profundidad suficiente para defenderlo: opcionalidad de prepago, retiro anticipado de
+plazo, riesgo de base, multi-moneda y la capa de gobernanza (política y límites,
+validación independiente estilo SR 11-7, backtesting, documentación auditable, gobierno
+del dato).
+
+`tests/test_scope.py` mantiene el documento honesto: comprueba que siga cubriendo lo
+que §4 y §7 exigen y que **las cifras que titula coincidan con las que el código
+produce hoy**. Un README que se desincroniza da confianza falsa.
+
+### 17.1 Lo que encontró la revisión crítica
+
+Cuatro hallazgos, uno serio.
+
+**1. El diagnóstico del Módulo 0 halagaba al balance.** `calibration_metrics` calculaba
+el ΔEVE con la duración de pasivo de **runoff** en lugar de la **efectiva**
+(beta-ajustada), teniendo ambas disponibles en la misma función. Resultado: −11,5% del
+Tier 1 y objetivo de §6.1 «cumplido», cuando la revaluación completa da −17,0% y el
+banco es outlier. Corregido: ahora da −21,9% y marca el objetivo como incumplido.
+
+Es el mismo error conceptual que el Módulo 4 documenta —núcleo de volumen contra núcleo
+de repreciación— pero escondido dentro del control de calidad. Un control de validación
+que favorece al balance es peor que no tenerlo.
+
+**2. Un test codificaba una creencia, no una invariante.**
+`test_el_eve_no_supera_el_umbral_de_alerta_supervisora` afirmaba que el banco no era
+outlier. Al corregir (1), falló — correctamente. Reescrito para afirmar lo que de verdad
+se sabe, y añadido un test que fija la elección de convención de duración.
+
+**3. Compromiso incumplido: `SENSITIVITY_GRID` declarado y nunca usado.** En §11.1
+prometí mostrar el mix hipotecario 18/21/25% como sensibilidad y no lo hice.
+Implementado en `sensibilidad_mix_hipotecario`; lo que gana el hipotecario lo cede el
+comercial para que el balance siga cuadrando:
+
+| Hipotecario | Dur. activo | Gap dur. | ΔEVE / Tier 1 |
+|---|---|---|---|
+| 18% (base) | 1,98 a | +0,74 a | −17,0% |
+| 21% | 2,13 a | +0,88 a | −20,3% |
+| 25% | 2,32 a | +1,07 a | **−24,6%** |
+
+**4. Config muerta.** `SEVERIDAD` declarado y nunca leído — eliminado.
+`year_fraction_30_360` existe y está probada pero no la usa producción: la convención
+30/360 está implementada implícitamente (cada mes vale 1/12). Se deja documentado en vez
+de fingir que se usa.
+
+### 17.2 Estado final
+
+238 tests. Los cinco `run_module*.py` corren limpios. Gate del Módulo 0 en 0 ERROR.
+Dos de los seis objetivos de §6.1 quedan incumplidos y **reportados como tales**: la
+duración de activos (por 0,05 a) y el ΔEVE, este último porque el rango se
+pre-registró sobre la definición equivocada de núcleo.

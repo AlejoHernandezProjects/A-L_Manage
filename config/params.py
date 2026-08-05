@@ -803,7 +803,6 @@ VALIDATION_THRESHOLDS = {
     "meses_exentos_salto": (95, 96, 97, 98),  # ventana del episodio de estrés
 }
 
-SEVERIDAD = {"ERROR": "ERROR", "WARNING": "WARNING"}
 
 # ---------------------------------------------------------------------------
 # 9. Barridos de sensibilidad (§10) — declarados de antemano

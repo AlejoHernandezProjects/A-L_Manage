@@ -183,7 +183,20 @@ def calibration_metrics(bundle, cfg) -> dict:
     delta_nii_pct = d_nii / nii_base
 
     # --- ΔEVE ante +200 pb, primer orden
-    delta_eve = -shock * (d_activos * a_total - d_pasivos * p_total)
+    #
+    # Se usa la duración de pasivo **efectiva** (ajustada por beta), no la de runoff.
+    # La diferencia no es un detalle: con la de runoff este diagnóstico daba −11,5%
+    # del Tier 1 y el banco "cumplía" el objetivo de §6.1, cuando la revaluación
+    # completa del Módulo 4 da −17,0% y lo convierte en outlier.
+    #
+    # El motivo es el mismo que el Módulo 4 documenta en su reconciliación: la
+    # duración de runoff trata como núcleo todo el saldo que no se va, cuando IRRBB
+    # define el núcleo como el que no **repacta**. Un cuarto del depósito a la vista
+    # se queda y aun así sigue a la tasa de mercado; contarlo como núcleo le atribuye
+    # un plazo que no tiene y hace parecer al banco más cubierto de lo que está.
+    #
+    # Un control de validación que halaga al balance es peor que no tenerlo.
+    delta_eve = -shock * (d_activos * a_total - d_pasivos_efectiva * p_total)
     delta_eve_sobre_tier1 = delta_eve / tier1
 
     return {

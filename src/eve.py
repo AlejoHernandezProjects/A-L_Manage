@@ -458,6 +458,62 @@ def sensibilidad_eve(bundle, cfg, modelo_base: dict) -> dict:
 # Informe
 # ---------------------------------------------------------------------------
 
+def sensibilidad_mix_hipotecario(cfg, shares=None) -> pd.DataFrame:
+    """§11.1: ¿con qué mix de balance este banco se vuelve *outlier*?
+
+    Es el barrido que quedó declarado en ``SENSITIVITY_GRID`` desde el Módulo 0, y la
+    razón por la que allí se decidió **no** subir el mix hipotecario para acercar el
+    banco al umbral: los objetivos de calibración se pre-registraron, y mover el
+    balance hasta que el número saliera dramático es exactamente lo que esa
+    pre-registración existe para impedir. El 25% se muestra como sensibilidad.
+
+    Para mantener el balance cuadrado, lo que gana el hipotecario lo cede el crédito
+    comercial. No es un artificio: es el traslado que un banco haría de verdad si
+    decidiera crecer en minorista de largo plazo, y es justo el que más cambia su
+    perfil de riesgo de tasa — cambia cartera indexada que repacta cada trimestre por
+    cartera fija a quince años.
+
+    Args:
+        cfg: Configuración base.
+        shares: Participaciones de hipotecario a probar; por defecto las de
+            ``SENSITIVITY_GRID``.
+
+    Returns:
+        DataFrame por participación con duración, peor escenario y ΔEVE / Tier 1.
+    """
+    from config.params import make_config
+    from src.data_gen import generate_dataset
+    from src.deposits import instrumentos_conductuales, modelo_nmd
+
+    shares = list(shares if shares is not None else cfg.SENSITIVITY_GRID["share_hipotecario"])
+    base_hip = cfg.INSTRUMENT_SPECS["hipotecario"]["share"]
+    base_com = cfg.INSTRUMENT_SPECS["comercial"]["share"]
+
+    filas = []
+    for s in shares:
+        cfg_s = make_config(**{
+            "INSTRUMENT_SPECS.hipotecario.share": s,
+            "INSTRUMENT_SPECS.comercial.share": base_com - (s - base_hip),
+        })
+        b = generate_dataset(cfg_s)
+        m = modelo_nmd(b, cfg_s)
+        ceros = b.curvas.iloc[-1].to_numpy()
+        cart = cartera_valorable(instrumentos_conductuales(b.instrumentos, m, cfg_s), ceros, cfg_s)
+        tabla = tabla_delta_eve(cart, ceros, cfg_s)
+        dc = duracion_convexidad(cart, ceros, cfg_s)
+        peor = tabla["delta_sobre_tier1"].idxmin()
+        filas.append({
+            "share_hipotecario": s,
+            "share_comercial": cfg_s.INSTRUMENT_SPECS["comercial"]["share"],
+            "duracion_activos": dc["duracion_activos"],
+            "gap_duracion": dc["gap_duracion"],
+            "peor_escenario": ETIQUETAS[peor],
+            "peor_sobre_tier1": tabla.loc[peor, "delta_sobre_tier1"],
+            "supera_umbral": bool(tabla.loc[peor, "supera_umbral"]),
+        })
+    return pd.DataFrame(filas).set_index("share_hipotecario")
+
+
 def informe_eve(bundle, cfg, modelo: dict, tabla_nii: pd.DataFrame | None = None) -> str:
     """Informe de valor económico en formato de comité.
 
@@ -599,9 +655,16 @@ def informe_eve(bundle, cfg, modelo: dict, tabla_nii: pd.DataFrame | None = None
         "",
         "### Reconciliación con el diagnóstico del Módulo 0",
         "",
-        "El Módulo 0 estimaba **−11,5%** del Tier 1 con una aproximación de duración. Aquí "
-        "sale peor. La diferencia no es de método de cálculo: es **de definición de núcleo**, "
-        "y merece explicarse porque es el error conceptual que el proyecto entero persigue.",
+        "El Módulo 0 estimaba **−21,9%** del Tier 1 con una aproximación de duración de primer "
+        "orden. Aquí sale menos malo porque la aproximación lineal sobrestima el deterioro "
+        "cerca de un 8% a 200 pb, como muestra la tabla anterior.",
+        "",
+        "Más interesante es de dónde venía el número que ese diagnóstico daba **antes** de la "
+        "revisión final: −11,5%, con el que el banco «cumplía» el objetivo pre-registrado. "
+        "Usaba la duración de pasivo sin ajustar por beta —el núcleo de **volumen** en lugar "
+        "del de **repreciación**— cuando la propia función ya calculaba la versión correcta "
+        "al lado. La diferencia es de definición de núcleo, y merece explicarse porque es el "
+        "error conceptual que el proyecto entero persigue.",
         "",
         "Aquel diagnóstico usaba el núcleo **de volumen** —la porción del saldo que no se "
         "va— como si fuera el núcleo de repreciación. IRRBB define el núcleo como la porción "
@@ -659,7 +722,30 @@ def informe_eve(bundle, cfg, modelo: dict, tabla_nii: pd.DataFrame | None = None
             f"{'**SÍ**' if f['supera_umbral'] else 'no'} |"
         )
 
+    mix = sensibilidad_mix_hipotecario(cfg)
     L += [
+        "",
+        "### Mix de balance (§11.1, declarado en `SENSITIVITY_GRID` desde el Módulo 0)",
+        "",
+        "| Hipotecario | Comercial | Dur. activo | Gap dur. | ΔEVE / Tier 1 | ¿Outlier? |",
+        "|---|---|---|---|---|---|",
+    ]
+    for s, f in mix.iterrows():
+        L.append(
+            f"| {s:.0%} | {f['share_comercial']:.1%} | {f['duracion_activos']:.2f} a | "
+            f"{f['gap_duracion']:+.2f} a | **{f['peor_sobre_tier1']:+.1%}** | "
+            f"{'**SÍ**' if f['supera_umbral'] else 'no'} |"
+        )
+    L += [
+        "",
+        "Lo que gana el hipotecario lo cede el comercial, así que el balance sigue "
+        "cuadrando. No es un artificio: es el traslado que un banco haría de verdad al "
+        "crecer en minorista de largo plazo, y es el que más cambia su perfil — cambia "
+        "cartera indexada que repacta cada trimestre por cartera fija a quince años.",
+        "",
+        "En el Módulo 0 se decidió **no** subir este mix para acercar el banco al umbral, "
+        "porque los objetivos se habían pre-registrado y moverlo habría sido acomodar el "
+        "balance al resultado deseado. Aparece aquí como sensibilidad, que es su sitio.",
         "",
         "## 6. Qué queda fuera",
         "",

@@ -43,8 +43,10 @@ Usa **plan mode** para proponer diseño antes de tocar archivos.
 - [x] Módulo 3 — Margen financiero (NII) + `src/scenarios.py`. Ver §15.
 - [x] Módulo 4 — Valor económico del patrimonio (EVE). Ver §16.
 - [x] Módulo 5 — Alcance vs. estándar IRRBB → `README.md`. Ver §17.
+- [x] Documento de teoría → `docs/Teoria_ALM_IRRBB.pdf`. Ver §18.
 
-**Proyecto completo.** `README.md` es el documento de entrada.
+**Proyecto completo.** `README.md` es el documento de entrada; `docs/Teoria_ALM_IRRBB.pdf`
+es la capa de razonamiento (teoría, derivaciones, decisiones y crítica).
 
 ## 4. Estructura del repositorio
 
@@ -69,6 +71,8 @@ data/ground_truth.json Parámetros verdaderos, escrito por el generador
 tests/
 notebooks/             Solo exploración, nunca lógica de producción
 README.md              Problema, supuestos, resultados, alcance vs. IRRBB
+docs/teoria.html       Documento de teoría — fuente editable  [añadido]
+docs/Teoria_ALM_IRRBB.pdf  El mismo, renderizado a PDF (68 pp.)  [añadido]
 ```
 
 ## 5. Perfil del banco (decisiones ya cerradas)
@@ -431,6 +435,11 @@ pip install -r requirements.txt
 python run_module0.py     # exit≠0 si falla algún ERROR; informe en data/
 python -m pytest tests/ -q
 ```
+
+**Nota de entorno.** En la máquina de desarrollo `python` no está en el PATH; sólo el
+lanzador de Windows. Ahí los comandos son `py run_module0.py` y `py -m pytest tests/ -q`.
+Dentro de un entorno virtual `python` funciona en cualquier sistema operativo, que es
+por lo que se mantiene como forma canónica en la documentación.
 
 ## 13. Módulo 1 — Brecha de repreciación
 
@@ -863,3 +872,56 @@ de fingir que se usa.
 Dos de los seis objetivos de §6.1 quedan incumplidos y **reportados como tales**: la
 duración de activos (por 0,05 a) y el ΔEVE, este último porque el rango se
 pre-registró sobre la definición equivocada de núcleo.
+
+## 18. Documento de teoría
+
+`docs/teoria.html` → `docs/Teoria_ALM_IRRBB.pdf`, 68 páginas. Once partes más anexos:
+el problema y por qué IRRBB es Pilar 2; la matemática de curvas; el generador y su
+validación; gap, NMD, escenarios, NII y EVE módulo por módulo; metodología; y una
+crítica del alcance.
+
+No repite el `README.md`: donde el README dice **qué salió**, el documento de teoría
+dice **por qué se hizo así**. Contiene las derivaciones que en el código sólo aparecen
+como conclusión — el techo de R² = 0,50 del control #7, la no identificabilidad como
+sistema de dos incógnitas y una ecuación, por qué un flotante vale la par en cada reset,
+por qué se interpola en `y·τ`— más la literatura (Nelson-Siegel, Vasicek,
+Hannan-Berger, Neumark-Sharpe, Drechsler-Savov-Schnabl) y un mapa código ↔ teoría.
+
+### 18.1 Cómo regenerar el PDF
+
+El HTML es la fuente; el PDF se renderiza con un navegador headless (no hay dependencia
+de LaTeX ni de pandoc). En esta máquina:
+
+```
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" `
+  --headless=new --disable-gpu --virtual-time-budget=30000 `
+  --run-all-compositor-stages-before-draw `
+  "--print-to-pdf=docs\Teoria_ALM_IRRBB.pdf" "file:///.../docs/teoria.html"
+```
+
+El CSS lleva `@page` A4, `thead {display: table-header-group}` para que las tablas
+largas repitan encabezado al partirse, y `page-break-before` en cada `h1`.
+
+### 18.2 Desincronizaciones corregidas al escribirlo
+
+Escribir la teoría obligó a releer el código entero, y eso destapó dos cosas:
+
+1. **La copia local de `data/eve_report.md` estaba obsoleta**: su reconciliación citaba
+   −11,5% del Tier 1 cuando `informe_eve` ya emitía −21,9%. Era anterior a la corrección
+   de `calibration_metrics` de §17.1 y nunca se regeneró. Los cinco informes se
+   regeneraron y ahora coinciden con el código.
+
+   Matiz que importa: los `data/*_report.md` están en `.gitignore` **a propósito** —son
+   reproducibles desde la semilla y no se versionan—, así que el desfase era de la copia
+   en disco, no del repositorio. La fuente de verdad (`src/eve.py`) siempre estuvo bien.
+   Aun así conviene regenerarlos tras cualquier cambio de modelo: quien clone el repo y
+   corra los módulos obtiene lo correcto, pero quien lea un informe viejo en su máquina
+   se lleva un número muerto.
+2. **La documentación asumía `python` en el PATH**, que en esta máquina no está. Anotado
+   en §12.6 y en el `README.md` sin cambiar la forma canónica.
+
+Es el mismo patrón que §17.1: **un artefacto que se desincroniza del código da confianza
+falsa**. `tests/test_scope.py` protege al `README.md` de eso; el `.gitignore` protege a
+los informes evitando que se versione una copia envejecida. El PDF de teoría **no** tiene
+ninguna de las dos redes: se versiona y nadie comprueba sus cifras, así que hay que
+regenerarlo a mano si los resultados cambian.

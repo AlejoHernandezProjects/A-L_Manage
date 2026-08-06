@@ -17,6 +17,16 @@ python run_module4.py    # valor económico del patrimonio
 python -m pytest tests/ -q
 ```
 
+> **En Windows sin `python` en el PATH**, usar el lanzador: `py run_module0.py`,
+> `py -m pytest tests/ -q`. Dentro de un entorno virtual `python` funciona en
+> cualquier sistema operativo y es la forma canónica.
+
+**Documento de teoría:** [`docs/Teoria_ALM_IRRBB.pdf`](docs/Teoria_ALM_IRRBB.pdf) (68 pp.)
+desarrolla la teoría detrás de cada paso y el porqué de cada decisión: la matemática de
+curvas, la literatura de beta de depósitos, las derivaciones de los hallazgos, la
+metodología de validación y una crítica honesta del alcance. Fuente editable en
+[`docs/teoria.html`](docs/teoria.html).
+
 ---
 
 ## 1. El problema

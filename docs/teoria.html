@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Teoría del Simulador ALM / IRRBB</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+p{orphans:2;widows:2}
+
+:root{
+  --tinta:#1a1a1a;
+  --suave:#555;
+  --acento:#1f4e79;
+  --acento2:#8a4b08;
+  --linea:#d4d4d4;
+  --fondo-caja:#f6f7f9;
+  --fondo-eq:#f2f4f7;
+}
+
+*{box-sizing:border-box}
+html{font-size:10.5pt}
+body{
+  margin:0;
+  font-family:"Georgia","Cambria",serif;
+  color:var(--tinta);
+  line-height:1.52;
+  text-align:justify;
+  hyphens:auto;
+}
+
+/* ---------- portada ---------- */
+.portada{
+  page-break-after:always;
+  padding-top:38mm;
+  text-align:left;
+  border-top:6px solid var(--acento);
+}
+.portada .kicker{
+  font-family:"Segoe UI",Arial,sans-serif;
+  font-size:9pt; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--acento); margin-bottom:10mm;
+}
+.portada h1{
+  font-size:30pt; line-height:1.12; margin:0 0 6mm 0; font-weight:normal;
+  border:none; padding:0;
+}
+.portada h2{
+  font-size:14pt; font-weight:normal; color:var(--suave);
+  margin:0 0 22mm 0; border:none; padding:0; font-style:italic;
+}
+.portada .meta{
+  font-family:"Segoe UI",Arial,sans-serif; font-size:9.5pt; color:var(--suave);
+  border-top:1px solid var(--linea); padding-top:4mm; line-height:1.9;
+}
+.portada .meta b{color:var(--tinta)}
+
+/* ---------- jerarquía ---------- */
+h1{
+  font-size:19pt; font-weight:normal; color:var(--acento);
+  margin:0 0 2mm 0; padding-bottom:2mm;
+  border-bottom:2px solid var(--acento);
+  page-break-before:always; page-break-after:avoid;
+  text-align:left; letter-spacing:-.01em;
+}
+h1 .num{
+  font-family:"Segoe UI",Arial,sans-serif; font-size:9pt; letter-spacing:.18em;
+  display:block; color:var(--acento2); text-transform:uppercase; margin-bottom:2mm;
+}
+h2{
+  font-size:13pt; font-weight:bold; margin:9mm 0 3mm 0;
+  page-break-after:avoid; text-align:left; color:var(--tinta);
+}
+h3{
+  font-size:11pt; font-weight:bold; margin:6mm 0 2mm 0;
+  page-break-after:avoid; text-align:left; color:var(--acento);
+}
+h4{
+  font-size:10.5pt; font-weight:bold; font-style:italic; margin:4mm 0 1mm 0;
+  page-break-after:avoid; text-align:left;
+}
+p{margin:0 0 3mm 0}
+h1+p,h2+p,h3+p,h4+p{margin-top:0}
+
+/* ---------- índice ---------- */
+.toc{page-break-after:always}
+.toc h1{page-break-before:avoid}
+.toc ol{list-style:none;padding:0;margin:0;font-family:"Segoe UI",Arial,sans-serif;font-size:9.5pt}
+.toc>ol>li{margin:4mm 0 1mm 0;font-weight:bold;color:var(--acento);text-transform:uppercase;letter-spacing:.06em;font-size:8.8pt}
+.toc ol ol{margin:1mm 0 0 0;font-weight:normal;color:var(--tinta);text-transform:none;letter-spacing:0;font-size:9.5pt}
+.toc ol ol li{margin:.6mm 0;padding-left:6mm;text-indent:-6mm}
+.toc .cap{color:var(--suave);display:inline-block;width:6mm}
+
+/* ---------- ecuaciones ---------- */
+.eq{
+  font-family:"Cambria Math","Cambria",Georgia,serif;
+  background:var(--fondo-eq);
+  border-left:3px solid var(--acento);
+  padding:2.5mm 4mm; margin:3mm 0;
+  text-align:left; line-height:1.75; font-size:10.5pt;
+  page-break-inside:avoid;
+}
+.eq .cmt{color:var(--suave);font-family:"Segoe UI",Arial,sans-serif;font-size:8.5pt;font-style:italic}
+var,.v{font-style:italic;font-family:"Cambria Math","Cambria",Georgia,serif}
+code,.mono{
+  font-family:"Consolas","Courier New",monospace; font-size:9pt;
+  background:#eceef1; padding:.3mm 1mm; border-radius:2px;
+}
+pre{
+  font-family:"Consolas","Courier New",monospace; font-size:8.6pt;
+  background:#f4f5f7; border:1px solid var(--linea); border-left:3px solid var(--suave);
+  padding:2.5mm 3mm; margin:3mm 0; overflow-x:auto; line-height:1.45;
+  text-align:left; page-break-inside:avoid; white-space:pre-wrap;
+}
+
+/* ---------- tablas ---------- */
+table{
+  border-collapse:collapse; width:100%; margin:3mm 0;
+  font-family:"Segoe UI",Arial,sans-serif; font-size:8.8pt;
+  text-align:left;
+  page-break-inside:auto;          /* que una tabla larga se parta en vez de dejar media pagina en blanco */
+}
+thead{display:table-header-group}  /* y que repita el encabezado al partirse */
+tr{page-break-inside:avoid}
+caption{page-break-before:avoid}
+th{
+  background:var(--acento); color:#fff; font-weight:600;
+  padding:1.6mm 2mm; text-align:left; border:1px solid var(--acento);
+  font-size:8.4pt; letter-spacing:.02em;
+}
+td{padding:1.4mm 2mm; border:1px solid var(--linea); vertical-align:top}
+tbody tr:nth-child(even){background:#fafbfc}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+table caption{
+  caption-side:bottom; font-family:"Segoe UI",Arial,sans-serif; font-size:8pt;
+  color:var(--suave); text-align:left; padding-top:1.5mm; font-style:italic;
+}
+.neg{color:#a02020;font-weight:600}
+.pos{color:#1b6b3a;font-weight:600}
+
+/* ---------- cajas ---------- */
+.caja{
+  background:var(--fondo-caja); border:1px solid var(--linea);
+  border-left:4px solid var(--acento2);
+  padding:3mm 4mm; margin:4mm 0; page-break-inside:avoid;
+}
+.caja .titulo{
+  font-family:"Segoe UI",Arial,sans-serif; font-size:8.2pt; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--acento2); font-weight:700; margin-bottom:1.5mm;
+}
+.caja p:last-child{margin-bottom:0}
+.caja.critica{border-left-color:#a02020}
+.caja.critica .titulo{color:#a02020}
+.caja.clave{border-left-color:var(--acento);background:#eef3f8}
+.caja.clave .titulo{color:var(--acento)}
+
+ul,ol{margin:0 0 3mm 0;padding-left:6mm}
+li{margin:.8mm 0}
+ul.compacta li{margin:.3mm 0}
+
+.nota{font-size:9pt;color:var(--suave)}
+.centro{text-align:center}
+dt{font-weight:bold;margin-top:2mm}
+dd{margin:0 0 1mm 5mm}
+hr{border:none;border-top:1px solid var(--linea);margin:6mm 0}
+a{color:var(--acento);text-decoration:none}
+.sep{text-align:center;color:var(--linea);letter-spacing:1em;margin:6mm 0}
+</style>
+</head>
+<body>
+
+<!-- ==================== PORTADA ==================== -->
+<section class="portada">
+  <div class="kicker">Documentación técnica · Proyecto de ciencia de datos</div>
+  <h1>La teoría detrás del<br>Simulador ALM / IRRBB</h1>
+  <h2>Qué se hizo en cada paso, por qué se hizo así,<br>y qué dice la literatura y la práctica profesional</h2>
+  <div class="meta">
+    <b>Proyecto:</b> Simulador de Asset &amp; Liability Management sobre el marco IRRBB<br>
+    <b>Marco de referencia:</b> Comité de Supervisión Bancaria de Basilea, <i>Interest Rate Risk in the Banking Book</i> (BCBS d368, abril 2016)<br>
+    <b>Autor:</b> Alejo S. Hernández — Matemáticas Aplicadas e Ingeniería de Sistemas, UNIMET<br>
+    <b>Alcance:</b> Módulos 0 a 5 · 238 tests · banco sintético de USD 50.000 M<br>
+    <b>Repositorio:</b> <code>A&amp;L_Manage</code> — <code>src/</code>, <code>config/params.py</code>, <code>tests/</code>
+  </div>
+</section>
+
+<!-- ==================== CÓMO LEER ==================== -->
+<h1><span class="num">Preliminar</span>Cómo leer este documento</h1>
+
+<p>Este documento responde a una pregunta concreta: <b>¿cuál es la teoría detrás de cada paso del proyecto y por qué se tomó cada decisión?</b> No es un manual de uso ni un resumen de resultados —para eso están <code>README.md</code> y los cinco informes de <code>data/</code>—. Es la capa de razonamiento que normalmente se pierde: la que explica por qué una fórmula se escribió de una manera y no de otra, qué dice la literatura, qué hace la industria, y dónde las dos discrepan.</p>
+
+<p>Está organizado siguiendo el orden en que se construyó el sistema, porque ese orden <i>es</i> el argumento. Cada módulo existe para resolver un problema que el anterior dejó abierto, y leerlos en desorden hace que varias decisiones parezcan arbitrarias cuando no lo son.</p>
+
+<h2>Convenciones de este texto</h2>
+
+<ul>
+<li><b>Cajas azules</b> marcan un concepto que hay que llevarse; <b>cajas naranjas</b>, una decisión de diseño y su justificación; <b>cajas rojas</b>, una crítica honesta o una limitación conocida.</li>
+<li>Las referencias al código son a los archivos reales del repositorio: <code>src/curves.py</code>, <code>src/deposits.py</code>, etc.</li>
+<li>Las cifras citadas son las que produce el código hoy, con la semilla <code>20251231</code>.</li>
+<li>Se usa notación decimal española (coma decimal, punto de millares) salvo dentro de bloques de código.</li>
+<li><b>pb</b> = punto básico = 0,01%. <b>M</b> = millones de USD. <b>a</b> = años.</li>
+</ul>
+
+<h2>Una advertencia sobre el estatus epistémico del proyecto</h2>
+
+<p>Este simulador corre sobre un <b>banco sintético generado por el propio proyecto</b>. Esa elección tiene una ventaja enorme y un costo enorme, y ambos se discuten en detalle en la <a href="#parte3">Parte III</a> y en la <a href="#parte11">Parte XI</a>. En resumen: permite medir el <i>error</i> de cada estimador contra un parámetro verdadero conocido —lo que un validador independiente pediría y con datos reales es imposible—, pero también significa que cuando el Módulo 2 «recupera» la beta, está invirtiendo un proceso cuya forma funcional él mismo conoce. Eso demuestra que el código no tiene errores; no demuestra que el método funcione sobre datos reales, donde el error dominante es de especificación y no de muestreo.</p>
+
+<p>El documento lo dice donde corresponde en lugar de dejarlo para el final. Un proyecto de portafolio que oculta esto es menos defendible en entrevista que uno que lo pone por delante.</p>
+
+<!-- ==================== ÍNDICE ==================== -->
+<section class="toc">
+<h1><span class="num">Contenido</span>Índice</h1>
+<ol>
+  <li>Parte I — El problema: qué es ALM y por qué existe IRRBB</li>
+  <ol>
+    <li><span class="cap">1.</span> La gestión de activos y pasivos como problema económico</li>
+    <li><span class="cap">2.</span> IRRBB: definición formal y los cuatro sub-riesgos</li>
+    <li><span class="cap">3.</span> Las dos métricas: NII y EVE, y por qué hacen falta las dos</li>
+    <li><span class="cap">4.</span> El arco argumental del proyecto</li>
+  </ol>
+
+  <li>Parte II — Matemática de curvas de rendimiento</li>
+  <ol>
+    <li><span class="cap">5.</span> Tasa cero, factor de descuento y elección de composición</li>
+    <li><span class="cap">6.</span> Nelson-Siegel: los tres factores y sus cargas</li>
+    <li><span class="cap">7.</span> Anclaje de dos puntos frente a calibración por mínimos cuadrados</li>
+    <li><span class="cap">8.</span> Interpolación en <span class="v">y·τ</span>: por qué el log-factor de descuento</li>
+    <li><span class="cap">9.</span> Convención de días 30/360</li>
+    <li><span class="cap">10.</span> Calendarios de flujos: bullet y sistema francés</li>
+    <li><span class="cap">11.</span> Duración, duración modificada y convexidad</li>
+    <li><span class="cap">12.</span> Tasa par y su papel en la valoración</li>
+  </ol>
+
+  <li>Parte III — Módulo 0: la construcción del banco sintético</li>
+  <ol>
+    <li><span class="cap">13.</span> Por qué generar datos en lugar de usarlos reales</li>
+    <li><span class="cap">14.</span> La tasa de política: Vasicek más capa de decisión de comité</li>
+    <li><span class="cap">15.</span> La curva de rendimiento y la inversión deliberada</li>
+    <li><span class="cap">16.</span> Tasas de depósito: la beta asimétrica y su literatura</li>
+    <li><span class="cap">17.</span> La patología de signo: una corrección de especificación completa</li>
+    <li><span class="cap">18.</span> Saldos de depósito: descomposición núcleo/volátil</li>
+    <li><span class="cap">19.</span> Cohortes (vintages) y sesgo de supervivencia</li>
+    <li><span class="cap">20.</span> Ground truth y la disciplina observable/latente</li>
+  </ol>
+
+  <li>Parte IV — Módulo 0: validación independiente</li>
+  <ol>
+    <li><span class="cap">21.</span> Por qué existe una función de validación separada (SR 11-7)</li>
+    <li><span class="cap">22.</span> Los once controles, uno por uno</li>
+    <li><span class="cap">23.</span> El control #7: cuando el umbral es matemáticamente inalcanzable</li>
+    <li><span class="cap">24.</span> El control #8: un control diseñado para avisar</li>
+    <li><span class="cap">25.</span> Pre-registro de objetivos de calibración</li>
+  </ol>
+
+  <li>Parte V — Módulo 1: la brecha de repreciación</li>
+  <ol>
+    <li><span class="cap">26.</span> Teoría del análisis de brechas</li>
+    <li><span class="cap">27.</span> Repreciación frente a vencimiento: dos ejes, dos riesgos</li>
+    <li><span class="cap">28.</span> Las diecinueve bandas y sus puntos medios</li>
+    <li><span class="cap">29.</span> Reparto amortizado frente a bullet</li>
+    <li><span class="cap">30.</span> Los tres supuestos falsos que todo gap hace</li>
+    <li><span class="cap">31.</span> El hallazgo: el gap contradice al margen</li>
+  </ol>
+
+  <li>Parte VI — Módulo 2: el modelo conductual de depósitos</li>
+  <ol>
+    <li><span class="cap">32.</span> El depósito sin vencimiento y sus tres plazos distintos</li>
+    <li><span class="cap">33.</span> Beta asimétrica: especificación y estimador</li>
+    <li><span class="cap">34.</span> Inferencia sobre una suma de coeficientes</li>
+    <li><span class="cap">35.</span> Proporción estable: destendencia y práctica supervisora</li>
+    <li><span class="cap">36.</span> Portafolio de réplica y mínimos cuadrados no negativos</li>
+    <li><span class="cap">37.</span> No identificabilidad de la vida del núcleo</li>
+    <li><span class="cap">38.</span> El núcleo regulatorio y sus topes</li>
+    <li><span class="cap">39.</span> Reasignación a bandas por decaimiento exponencial</li>
+    <li><span class="cap">40.</span> La sensibilidad como entregable, no como apéndice</li>
+  </ol>
+
+  <li>Parte VII — Los seis escenarios de choque</li>
+  <ol>
+    <li><span class="cap">41.</span> Calibración por moneda y por qué no es un número universal</li>
+    <li><span class="cap">42.</span> Los escalares de tramo</li>
+    <li><span class="cap">43.</span> Construcción de los seis</li>
+    <li><span class="cap">44.</span> El suelo post-choque</li>
+    <li><span class="cap">45.</span> Convención: dos escenarios para NII, seis para EVE</li>
+  </ol>
+
+  <li>Parte VIII — Módulo 3: el margen financiero</li>
+  <ol>
+    <li><span class="cap">46.</span> Definición del NII y el supuesto de balance constante</li>
+    <li><span class="cap">47.</span> Mecánica de la proyección</li>
+    <li><span class="cap">48.</span> Qué plazo de la curva le toca a cada instrumento</li>
+    <li><span class="cap">49.</span> El perfil temporal de traspaso</li>
+    <li><span class="cap">50.</span> El piso de cero en la tasa pasiva</li>
+    <li><span class="cap">51.</span> El resultado: una posición larga en volatilidad de tasas</li>
+    <li><span class="cap">52.</span> Por qué la ganancia tiene fecha de caducidad</li>
+  </ol>
+
+  <li>Parte IX — Módulo 4: el valor económico del patrimonio</li>
+  <ol>
+    <li><span class="cap">53.</span> Definición del EVE y qué entra en él</li>
+    <li><span class="cap">54.</span> Calibración a la par: aislar riesgo de tasa de riesgo de crédito</li>
+    <li><span class="cap">55.</span> Flujos de repreciación: por qué un flotante vale la par en cada reset</li>
+    <li><span class="cap">56.</span> Duración efectiva por diferencias finitas</li>
+    <li><span class="cap">57.</span> Taylor: primer orden, segundo orden y el error residual</li>
+    <li><span class="cap">58.</span> El gap de duración ajustado por apalancamiento</li>
+    <li><span class="cap">59.</span> El outlier test del 15% del Tier 1</li>
+    <li><span class="cap">60.</span> El hallazgo que cierra el proyecto</li>
+  </ol>
+
+  <li>Parte X — Metodología y epistemología del modelo</li>
+  <ol>
+    <li><span class="cap">61.</span> Pre-registro: por qué los objetivos se fijan antes</li>
+    <li><span class="cap">62.</span> Identificación frente a estimación</li>
+    <li><span class="cap">63.</span> Tests que codifican invariantes frente a tests que codifican creencias</li>
+    <li><span class="cap">64.</span> Las cuatro correcciones y qué enseña cada una</li>
+  </ol>
+
+  <li>Parte XI — Crítica: hasta dónde llega este proyecto</li>
+  <ol>
+    <li><span class="cap">65.</span> Qué es fiel a la práctica real</li>
+    <li><span class="cap">66.</span> Qué no lo es</li>
+    <li><span class="cap">67.</span> Veredicto</li>
+  </ol>
+
+  <li>Anexos</li>
+  <ol>
+    <li><span class="cap">A.</span> Notación</li>
+    <li><span class="cap">B.</span> Glosario español–inglés</li>
+    <li><span class="cap">C.</span> Mapa código ↔ teoría</li>
+    <li><span class="cap">D.</span> Bibliografía y fuentes normativas</li>
+  </ol>
+</ol>
+</section>
+
+<!-- ==================== PARTE I ==================== -->
+<h1 id="parte1"><span class="num">Parte I</span>El problema: qué es ALM y por qué existe IRRBB</h1>
+
+<h2>1. La gestión de activos y pasivos como problema económico</h2>
+
+<p>Un banco comercial existe porque hace <b>transformación de plazos</b>: capta dinero a corto plazo —depósitos que el cliente puede retirar mañana— y lo presta a largo plazo —una hipoteca a veinte años—. Esa transformación es el servicio económico que presta y también la fuente de su beneficio: la curva de rendimiento normalmente tiene pendiente positiva, así que prestar largo y fondearse corto genera margen.</p>
+
+<p>El problema es que ese mismo mecanismo lo expone. Si las tasas suben, el banco tiene que repactar su fondeo a precios más caros mientras buena parte de su activo sigue rindiendo la tasa antigua. Si bajan, ocurre lo contrario. La disciplina que mide, limita y gestiona esa exposición es la <b>gestión de activos y pasivos</b> (<i>Asset and Liability Management</i>, ALM), y su órgano de gobierno en cualquier banco es el <b>ALCO</b> (<i>Asset and Liability Committee</i>), un comité que suele reunirse mensualmente y en el que se sientan tesorería, riesgos, finanzas y negocio.</p>
+
+<div class="caja clave">
+<div class="titulo">Idea central</div>
+<p>El riesgo de tasa de interés en un banco no es un riesgo accesorio que se pueda eliminar: es el subproducto inevitable del negocio. La pregunta de ALM nunca es «¿cómo elimino esta exposición?» sino «¿cuánta tengo, la quiero, y qué haría si el escenario que temo ocurriera?».</p>
+</div>
+
+<h3>Por qué esto no es un problema de trading</h3>
+
+<p>La regulación bancaria separa el balance en dos: la <b>cartera de negociación</b> (<i>trading book</i>), valorada a mercado día a día, y la <b>cartera bancaria</b> (<i>banking book</i>), contabilizada a costo amortizado. La cartera de negociación tiene su propio marco de capital y sus propias métricas (VaR, <i>expected shortfall</i>). La cartera bancaria no se revalúa contra el mercado, y por eso su riesgo de tasa es invisible en la cuenta de resultados hasta que se materializa.</p>
+
+<p>Ese es exactamente el problema que IRRBB existe para atacar: un banco puede acumular una exposición enorme a tasas en su cartera bancaria sin que aparezca en ningún estado financiero, porque la contabilidad no la reconoce hasta que el margen empieza a caer —lo que puede tardar años—. La crisis de las <i>Savings &amp; Loans</i> estadounidenses en los años ochenta, y con matices el episodio de Silicon Valley Bank en 2023, son ejemplos de bancos que quebraron por riesgo de tasa en la cartera bancaria mientras sus indicadores contables se veían aceptables.</p>
+
+<h2>2. IRRBB: definición formal y los cuatro sub-riesgos</h2>
+
+<p><b>IRRBB</b> (<i>Interest Rate Risk in the Banking Book</i>) es el riesgo, presente y futuro, de que movimientos adversos en las tasas de interés afecten al capital y a los beneficios del banco a través de posiciones de la cartera bancaria. El estándar vigente es el documento <b>BCBS d368</b> del Comité de Basilea (abril de 2016), que sustituyó a los <i>Principles for the management and supervision of interest rate risk</i> de 2004.</p>
+
+<p>El estándar descompone IRRBB en tres componentes, a los que la práctica añade habitualmente un cuarto:</p>
+
+<table>
+<thead><tr><th style="width:22%">Componente</th><th>Qué es</th><th style="width:30%">Estado en este proyecto</th></tr></thead>
+<tbody>
+<tr><td><b>Riesgo de brecha</b><br><span class="nota">gap / repricing risk</span></td><td>Diferencia en el momento en que repactan activos y pasivos. Es el componente dominante y el que este proyecto modela en su totalidad.</td><td><b>Implementado</b> — Módulos 1 a 4</td></tr>
+<tr><td><b>Riesgo de base</b><br><span class="nota">basis risk</span></td><td>Dos posiciones repactan en la misma fecha pero contra índices distintos (p. ej. activo indexado a SOFR, pasivo a la tasa de depósito administrada), y esos índices no se mueven juntos.</td><td><b>Fuera de alcance</b> — un solo índice de referencia</td></tr>
+<tr><td><b>Riesgo de opcionalidad</b><br><span class="nota">option risk</span></td><td>Opciones implícitas o explícitas en los contratos: prepago de hipotecas, retiro anticipado de depósitos a plazo, techos y suelos de tasa.</td><td><b>Fuera de alcance</b> — documentado y cuantificado cualitativamente</td></tr>
+<tr><td><b>Riesgo de curva</b><br><span class="nota">yield curve risk</span></td><td>Cambios en la <i>forma</i> de la curva, no sólo en su nivel. Es lo que capturan los escenarios de empinamiento y aplanamiento.</td><td><b>Implementado</b> — cuatro de los seis escenarios</td></tr>
+</tbody>
+<caption>Los componentes de IRRBB según BCBS d368 y su cobertura en este proyecto.</caption>
+</table>
+
+<h3>Pilar 2, no Pilar 1</h3>
+
+<p>Una característica del marco que conviene entender para no confundirse con el resto de la regulación: <b>IRRBB vive en el Pilar 2, no en el Pilar 1</b>. El Pilar 1 fija requerimientos de capital mínimos por fórmula (riesgo de crédito, de mercado, operacional). El Pilar 2 es el proceso de revisión supervisora: el banco debe medir, gestionar y demostrar que entiende su riesgo, y el supervisor decide caso por caso si exige capital adicional.</p>
+
+<p>La consecuencia práctica es que <b>el umbral del 15% del Tier 1 no es un límite duro que prohíba operar</b>. Es un <i>outlier test</i>: un disparador que obliga al banco a explicarse ante su supervisor y, en la práctica, a traer un plan de acción documentado. Un banco puede operar por encima del umbral si sabe defender por qué. Confundir esto —tratarlo como un límite regulatorio duro— es un error frecuente en presentaciones y se detecta en entrevista de inmediato.</p>
+
+<div class="caja">
+<div class="titulo">Por qué el Comité eligió Pilar 2</div>
+<p>El borrador de consulta de 2015 planteaba llevar IRRBB al Pilar 1 con una fórmula estandarizada de capital. La industria objetó, con razón, que la exposición depende críticamente de supuestos conductuales —sobre todo el tratamiento de los depósitos sin vencimiento— que ninguna fórmula universal puede fijar sin distorsionar. El estándar final de 2016 mantiene el marco estandarizado como <i>fallback</i> que el supervisor puede imponer, pero deja la medición en manos del banco bajo revisión supervisora. Este proyecto implementa esencialmente el marco estandarizado, que es el suelo común.</p>
+</div>
+
+<h2>3. Las dos métricas: NII y EVE, y por qué hacen falta las dos</h2>
+
+<p>El estándar exige medir el riesgo desde <b>dos perspectivas distintas</b>, y la razón por la que exige las dos es el resultado central que este proyecto demuestra con números propios.</p>
+
+<table>
+<thead><tr><th style="width:18%"></th><th style="width:41%">NII — <i>Net Interest Income</i></th><th style="width:41%">EVE — <i>Economic Value of Equity</i></th></tr></thead>
+<tbody>
+<tr><td><b>Qué mide</b></td><td>Margen financiero devengado en un horizonte corto (típicamente 12 meses).</td><td>Valor presente de todos los flujos futuros, activos menos pasivos.</td></tr>
+<tr><td><b>Perspectiva</b></td><td>Beneficios (<i>earnings</i>). Corto plazo.</td><td>Valor económico. Toda la vida del balance.</td></tr>
+<tr><td><b>Qué manda</b></td><td>Quién repacta antes dentro del horizonte.</td><td>Quién tiene más duración.</td></tr>
+<tr><td><b>Unidad</b></td><td>Δ% sobre el NII base.</td><td>Δ absoluto contra el capital Tier 1.</td></tr>
+<tr><td><b>Escenarios</b></td><td>Por convención, los dos paralelos.</td><td>Los seis prescritos.</td></tr>
+<tr><td><b>Umbral</b></td><td>Interno, de apetito de riesgo.</td><td>Regulatorio: 15% del Tier 1 (<i>outlier test</i>).</td></tr>
+<tr><td><b>Sesgo típico</b></td><td>Miope: puede aplaudir un movimiento que destruye valor.</td><td>Ignora la dinámica del negocio: no dice si el banco gana dinero mañana.</td></tr>
+</tbody>
+</table>
+
+<div class="caja clave">
+<div class="titulo">El teorema práctico</div>
+<p><b>NII y EVE pueden moverse en direcciones opuestas ante el mismo choque, y en un banco minorista típico lo hacen.</b> No es una anomalía ni un error de cálculo: es la consecuencia matemática de que midan cosas distintas. Un banco cuyo activo repacta rápido (cartera comercial indexada) y cuyo pasivo repacta poco (depósitos con beta baja) <i>gana margen</i> cuando suben las tasas. Si a la vez ese banco carga una cartera hipotecaria fija a quince o veinte años, su duración de activo es alta y <i>pierde valor económico</i> ante el mismo choque.</p>
+<p>Gestionar solo por NII llevaría a ese banco a celebrar una subida de tasas que le está destruyendo patrimonio. Gestionar solo por EVE lo llevaría a cubrirse contra un movimiento del que en realidad se está beneficiando en el corto plazo. Por eso Basilea exige ambas y por eso este proyecto se calibró deliberadamente para que las dos apuntaran en direcciones opuestas.</p>
+</div>
+
+<h3>La aritmética de por qué pueden discrepar</h3>
+
+<p>Considérese un banco simplificado con un solo activo y un solo pasivo. Ante un choque paralelo <span class="v">Δy</span>:</p>
+
+<div class="eq">
+ΔNII ≈ Δy · [ A · <var>f</var><sub>A</sub> − L · β<sub>L</sub> · <var>f</var><sub>L</sub> ]<br>
+<span class="cmt">donde f es la fracción del horizonte en que la posición está ya repactada y β el traspaso</span><br><br>
+ΔEVE ≈ −Δy · [ D<sub>A</sub> · A − D<sub>L</sub> · L ]<br>
+<span class="cmt">donde D es la duración modificada de cada lado</span>
+</div>
+
+<p>Los dos corchetes contienen objetos distintos. El primero pondera por <i>cuándo</i> repacta cada posición dentro de doce meses; el segundo, por el plazo medio de <i>toda</i> la vida de sus flujos. Un activo que repacta cada tres meses tiene <span class="v">f</span> ≈ 0,875 —contribuye casi todo al primer corchete— y duración ≈ 0,125 años —contribuye casi nada al segundo—. Una hipoteca fija a veinte años hace exactamente lo contrario. Basta con que el balance mezcle ambos para que los signos se separen.</p>
+
+<h2>4. El arco argumental del proyecto</h2>
+
+<p>Los seis módulos no son seis ejercicios independientes: cada uno resuelve un problema que el anterior deja abierto. Entender ese encadenamiento es entender el proyecto.</p>
+
+<table>
+<thead><tr><th style="width:12%">Módulo</th><th style="width:38%">Qué hace</th><th>Qué problema deja abierto</th></tr></thead>
+<tbody>
+<tr><td><b>0</b><br><span class="nota">Generación</span></td><td>Construye un banco sintético completo con parámetros verdaderos conocidos y lo somete a once controles de calidad.</td><td>Ninguno propio. Establece el terreno y la posibilidad de medir errores contra un ground truth.</td></tr>
+<tr><td><b>1</b><br><span class="nota">Gap</span></td><td>Clasifica el balance por cuándo repacta y calcula la brecha acumulada a 12 meses.</td><td><b>El gap dice ALERTA (−20,6% de los activos) mientras el margen mejora.</b> Los dos números son correctos; el gap está mal especificado.</td></tr>
+<tr><td><b>2</b><br><span class="nota">NMD</span></td><td>Estima la beta asimétrica de los depósitos y su plazo conductual; reasigna los 22.000 M de vista y ahorro a bandas según comportamiento.</td><td>El gap corregido (−1,3%) sigue sin poder <i>predecir</i> el signo del margen, porque todo análisis de brechas supone traspaso del 100% dentro de la banda.</td></tr>
+<tr><td><b>3</b><br><span class="nota">NII</span></td><td>Proyecta el margen mes a mes bajo los seis escenarios usando la beta del Módulo 2.</td><td>Mide solo doce meses. No dice nada sobre el valor de los 9.000 M de hipotecas fijas.</td></tr>
+<tr><td><b>4</b><br><span class="nota">EVE</span></td><td>Revalúa el balance completo bajo los seis escenarios y lo compara contra el Tier 1.</td><td>El veredicto regulatorio depende de un supuesto que el Módulo 2 demostró no identificable.</td></tr>
+<tr><td><b>5</b><br><span class="nota">Alcance</span></td><td>Documenta con honestidad qué quedó fuera y por qué, y somete el README a test.</td><td>—</td></tr>
+</tbody>
+</table>
+
+<div class="caja">
+<div class="titulo">Protocolo de fases</div>
+<p>El proyecto se construyó bajo una regla estricta: para cada módulo, primero se propone el diseño completo —funciones, firmas, supuestos, parámetros— y se explican las decisiones; solo después de aprobación explícita se implementa, con docstrings y tests. Ningún módulo avanzó sin que el anterior pasara sus controles. En el Módulo 0, además, los datos debían superar el <i>gate</i> de validación (cero ERROR) antes de continuar.</p>
+<p>Esa disciplina no es burocracia: es la que hace que las decisiones de diseño queden registradas <i>antes</i> de ver los resultados, que es la única forma de que un análisis de sensibilidad signifique algo.</p>
+</div>
+
+<!-- ==================== PARTE II ==================== -->
+<h1 id="parte2"><span class="num">Parte II</span>Matemática de curvas de rendimiento</h1>
+
+<p class="nota">Todo lo de esta parte vive en <code>src/curves.py</code>. El módulo existe porque las mismas dos operaciones —interpolar una tasa cero a un plazo arbitrario y descontar un flujo— se usan en el Módulo 0 (fijar la tasa de originación de cada cohorte con la curva vigente ese mes) y otra vez en el Módulo 4 (valorar el balance bajo los seis escenarios). Duplicarlas rompería la regla de consistencia del proyecto: <i>la curva que descuenta en el Módulo 4 es la misma que alimenta las tasas del Módulo 1</i>.</p>
+
+<h2>5. Tasa cero, factor de descuento y elección de composición</h2>
+
+<p>La <b>tasa cero</b> (o <i>spot</i>) a plazo <span class="v">τ</span>, denotada <span class="v">y(τ)</span>, es el rendimiento de una inversión que no paga nada hasta <span class="v">τ</span> y devuelve todo al final. El <b>factor de descuento</b> <span class="v">DF(τ)</span> es el precio hoy de una unidad monetaria entregada en <span class="v">τ</span>. La relación entre ambos depende de la convención de composición:</p>
+
+<div class="eq">
+Composición discreta (<span class="v">m</span> veces al año):&nbsp;&nbsp; DF(τ) = (1 + y/m)<sup>−mτ</sup><br>
+Composición continua:&nbsp;&nbsp; DF(τ) = e<sup>−y(τ)·τ</sup>
+</div>
+
+<p>El proyecto guarda toda la curva en <b>composición continua</b>. La decisión es de ingeniería, no de negocio, y tiene tres consecuencias que se aprovechan en todo el sistema:</p>
+
+<ol>
+<li><b>Positividad y monotonía por construcción.</b> Mientras <span class="v">y(τ)·τ</span> sea creciente, <span class="v">DF(τ) = e<sup>−y·τ</sup></span> es positivo y estrictamente decreciente. Eso es exactamente el control #6 de validación, que así pasa por construcción en lugar de por suerte.</li>
+<li><b>Aditividad.</b> Descontar de <span class="v">t</span><sub>1</sub> a <span class="v">t</span><sub>2</sub> y de <span class="v">t</span><sub>2</sub> a <span class="v">t</span><sub>3</sub> es sumar exponentes. Con composición discreta hay que multiplicar factores, lo que introduce errores de redondeo acumulativos en carteras de miles de flujos.</li>
+<li><b>La duración modificada coincide con la de Macaulay.</b> Esto se demuestra en §11 y elimina toda una clase de errores de factor.</li>
+</ol>
+
+<h3>El puente hacia el mundo real: <code>continuous_to_nominal</code></h3>
+
+<p>Una curva se guarda en composición continua, pero <b>un contrato de crédito no se escribe así</b>. Un préstamo dice «12,4% nominal anual, pagadero mensualmente». Convertir en la frontera —al fijar la tasa contractual de una cohorte y al proyectar el margen— evita el error clásico de tratar ambas convenciones como intercambiables:</p>
+
+<div class="eq">
+r<sub>nom</sub> = m · ( e<sup>y/m</sup> − 1 )
+</div>
+
+<p>A 5% con doce pagos al año la diferencia es de 1 pb, despreciable. A 20% —la cartera de tarjetas de este banco— son <b>17 pb</b>, y sobre 3.600 M eso ya es dinero visible en el NIM. Es el tipo de detalle que separa un modelo que cuadra de uno que casi cuadra.</p>
+
+<h2>6. Nelson-Siegel: los tres factores y sus cargas</h2>
+
+<p>La curva no se guarda como doce números sueltos por fecha: se genera a partir de una <b>parametrización de Nelson-Siegel</b> (Nelson y Siegel, 1987), que es el estándar de facto en bancos centrales y mesas de tesorería para representar una curva completa con cuatro parámetros.</p>
+
+<div class="eq">
+y(τ) = β<sub>0</sub> + β<sub>1</sub> · L<sub>1</sub>(τ) + β<sub>2</sub> · L<sub>2</sub>(τ)<br><br>
+L<sub>1</sub>(τ) = ( 1 − e<sup>−τ/λ</sup> ) / (τ/λ)<br>
+L<sub>2</sub>(τ) = L<sub>1</sub>(τ) − e<sup>−τ/λ</sup>
+</div>
+
+<p>La lectura económica de los tres coeficientes es la que hizo célebre la parametrización (Diebold y Li, 2006), y es la razón por la que se usa en lugar de un <i>spline</i> cualquiera:</p>
+
+<table>
+<thead><tr><th style="width:10%">Factor</th><th style="width:22%">Interpretación</th><th>Comportamiento de su carga</th></tr></thead>
+<tbody>
+<tr><td><b>β<sub>0</sub></b></td><td><b>Nivel</b></td><td>Carga constante igual a 1 en todos los plazos. Un cambio en β<sub>0</sub> es un desplazamiento paralelo puro. Es el límite de la curva cuando τ → ∞.</td></tr>
+<tr><td><b>β<sub>1</sub></b></td><td><b>Pendiente</b></td><td>L<sub>1</sub>(τ) vale 1 en τ → 0 y decae monótonamente a 0. Por tanto <span class="v">y(0) = β<sub>0</sub> + β<sub>1</sub></span> e <span class="v">y(∞) = β<sub>0</sub></span>: β<sub>1</sub> es exactamente el negativo de la pendiente 10A − corto.</td></tr>
+<tr><td><b>β<sub>2</sub></b></td><td><b>Curvatura</b></td><td>L<sub>2</sub>(τ) vale 0 en ambos extremos y tiene un máximo en el medio. Es la «joroba». Su máximo está en τ ≈ 1,79·λ.</td></tr>
+<tr><td><b>λ</b></td><td><b>Decaimiento</b></td><td>Fija dónde ocurre la joroba. Aquí λ = 2,5 años, lo que la sitúa en ≈ 30 meses.</td></tr>
+</tbody>
+</table>
+
+<h3>Por qué λ se fija y no se estima</h3>
+
+<p>La función es <b>no lineal en λ</b> pero <b>lineal en (β<sub>0</sub>, β<sub>1</sub>, β<sub>2</sub>)</b>. Estimar los cuatro a la vez exige optimización no lineal, que en curvas con pocos nodos es notoriamente inestable: pequeños cambios en los datos producen saltos grandes en λ y, con ellos, en la forma. Diebold y Li propusieron fijar λ y estimar el resto por mínimos cuadrados ordinarios, y eso es lo que hace la industria. Aquí se va un paso más allá y se resuelve exactamente (§7).</p>
+
+<h3>El detalle numérico que hay que cuidar</h3>
+
+<p>L<sub>1</sub>(τ) tiene la forma <span class="v">(1 − e<sup>−x</sup>)/x</span>, que es <b>0/0 en x = 0</b>. El límite existe y vale 1, pero una implementación ingenua produce <code>nan</code>. Y el ancla corta del proyecto vive justo ahí —τ = 0,25 años no es cero, pero el modelo se evalúa también en plazos muy cortos—. El código evalúa el límite explícitamente:</p>
+
+<pre>x = tau / lam
+l1 = np.where(x &lt; 1e-8, 1.0, (1.0 - np.exp(-x)) / np.where(x &lt; 1e-8, 1.0, x))
+l2 = l1 - np.exp(-x)</pre>
+
+<p>El doble <code>np.where</code> no es redundancia: el interior se evalúa <i>siempre</i> en NumPy, así que sin el segundo se produciría una división por cero real —con su aviso y su <code>inf</code>— antes de que el primer <code>where</code> pudiera descartarla.</p>
+
+<h2>7. Anclaje de dos puntos frente a calibración por mínimos cuadrados</h2>
+
+<p>El enfoque habitual sería ajustar Nelson-Siegel por mínimos cuadrados sobre cotizaciones de mercado. Aquí se hace algo distinto y deliberado: dados β<sub>2</sub> y λ, se <b>resuelve exactamente</b> (β<sub>0</sub>, β<sub>1</sub>) para que la curva pase por dos anclas prefijadas.</p>
+
+<div class="eq">
+β<sub>0</sub> + β<sub>1</sub>·L<sub>1</sub>(τ<sub>c</sub>) = y<sub>c</sub> − β<sub>2</sub>·L<sub>2</sub>(τ<sub>c</sub>)<br>
+β<sub>0</sub> + β<sub>1</sub>·L<sub>1</sub>(τ<sub>l</sub>) = y<sub>l</sub> − β<sub>2</sub>·L<sub>2</sub>(τ<sub>l</sub>)<br><br>
+<span class="cmt">sistema lineal 2×2, resuelto con np.linalg.solve</span>
+</div>
+
+<p>Con τ<sub>c</sub> = 3 meses e y<sub>c</sub> = la tasa de política, y τ<sub>l</sub> = 10 años e y<sub>l</sub> = tasa de política + pendiente del régimen.</p>
+
+<div class="caja">
+<div class="titulo">Por qué anclar</div>
+<p><b>Razón de ingeniería.</b> El control de validación #5 exige que la curva a 3M quede dentro de ±25 pb de la tasa de referencia en <i>cada una</i> de las 120 fechas. Ajustar por mínimos cuadrados y después comprobar si el ancla corta cayó en rango es frágil: basta una fecha mala en 120 para bloquear el <i>gate</i>. Anclando, el control pasa <b>por construcción</b> y β<sub>2</sub> queda libre para dar forma al tramo intermedio.</p>
+<p><b>Razón económica.</b> El anclaje corto es además correcto en teoría: salvo primas de plazo pequeñas, el tramo corto de la curva <i>es</i> la trayectoria esperada de la tasa de política. Forzar <span class="v">y(3M) = r</span> no es una licencia, es la hipótesis de expectativas aplicada donde mejor aguanta.</p>
+</div>
+
+<h2>8. Interpolación en <span class="v">y·τ</span>: por qué el log-factor de descuento</h2>
+
+<p>La curva se almacena en doce nodos (1M, 3M, 6M, 1A, 2A, 3A, 5A, 7A, 10A, 15A, 20A, 30A) pero hay que descontar flujos en plazos arbitrarios: el mes 47 de una hipoteca, el reset del mes 7 de un crédito comercial. Hay que interpolar, y <b>cómo se interpola no es indiferente</b>.</p>
+
+<p>El proyecto interpola linealmente en <span class="v">w(τ) = y(τ)·τ</span> y luego divide:</p>
+
+<div class="eq">
+w(τ) = interp_lineal( τ ; τ<sub>nodos</sub>, y<sub>nodos</sub>·τ<sub>nodos</sub> )<br>
+y(τ) = w(τ) / τ
+</div>
+
+<p>La clave: <span class="v">w(τ) = −ln DF(τ)</span>. Interpolar linealmente en <span class="v">w</span> equivale a <b>interpolar linealmente el logaritmo del factor de descuento</b>, y eso tiene dos consecuencias que ninguna otra elección tiene:</p>
+
+<ol>
+<li><b>Preserva la monotonía de los factores de descuento.</b> Si <span class="v">w</span> es creciente en los nodos, la interpolación lineal es creciente en todo el rango, luego <span class="v">DF = e<sup>−w</sup></span> es decreciente en todo el rango. El control #6 pasa siempre.</li>
+<li><b>Las tasas forward implícitas entre nodos son constantes.</b> La forward instantánea es <span class="v">f(τ) = dw/dτ</span>; si <span class="v">w</span> es lineal por tramos, <span class="v">f</span> es constante por tramos. Es el llamado <i>piecewise-constant forward</i>, la convención más usada en construcción de curvas precisamente porque no inventa estructura entre nodos.</li>
+</ol>
+
+<div class="caja critica">
+<div class="titulo">Qué pasa si se interpola linealmente en y</div>
+<p>Interpolar en <span class="v">y</span> en lugar de en <span class="v">y·τ</span> puede producir <b>tasas forward negativas entre nodos</b> incluso con todas las tasas cero positivas. Ocurre cuando la curva está invertida y el descenso de <span class="v">y</span> entre dos nodos es lo bastante rápido como para que <span class="v">y(τ<sub>2</sub>)·τ<sub>2</sub> &lt; y(τ<sub>1</sub>)·τ<sub>1</sub></span>.</p>
+<p>Y este proyecto genera <b>a propósito</b> una curva invertida en los meses 55–81, justamente para que el escenario de empinamiento del Módulo 4 tenga algo que revertir. Es decir: el régimen en el que la interpolación ingenua falla es exactamente el que el proyecto necesita que exista. La elección de interpolación no es un tecnicismo aquí, es una condición para que el resultado sea válido.</p>
+</div>
+
+<p>Fuera del rango de nodos se extrapola <b>plano</b> —la tasa del nodo extremo—, que es la práctica de mesa habitual. Extrapolar la pendiente hacia afuera produce curvas que se disparan o se hunden en plazos donde no hay mercado.</p>
+
+<h2>9. Convención de días 30/360</h2>
+
+<p>Toda medición de tiempo en el proyecto usa <b>base 30/360 (US)</b>: cada mes vale 30 días, el año 360.</p>
+
+<div class="eq">
+fracción = [ (Y<sub>2</sub>−Y<sub>1</sub>)·360 + (M<sub>2</sub>−M<sub>1</sub>)·30 + (D<sub>2</sub>−D<sub>1</sub>) ] / 360<br>
+<span class="cmt">con D truncado a 30 y la corrección 30↔31 del estándar US</span>
+</div>
+
+<p>Es la convención de la banca comercial, y la razón es práctica: <b>hace que todas las cuotas mensuales de un crédito sean idénticas entre sí</b>. Con base actual/365 la cuota de febrero sería distinta de la de marzo y el cuadro de amortización que ve el cliente no coincidiría con el del sistema. Los mercados monetarios usan actual/360, los de bonos soberanos actual/actual; el 30/360 es de crédito corporativo y minorista, que es lo que este banco tiene.</p>
+
+<div class="caja">
+<div class="titulo">Nota de honestidad sobre la implementación</div>
+<p>La función <code>year_fraction_30_360</code> existe y está probada, pero <b>producción no la llama</b>. La convención está implementada implícitamente: todo el proyecto trabaja en meses enteros desde la fecha de corte y cada mes vale exactamente 1/12 de año, que es la misma cosa. Se dejó documentado en lugar de fingir que se usa, y se dejó la función porque cualquier extensión a fechas irregulares la necesitaría de inmediato.</p>
+</div>
+
+<h2>10. Calendarios de flujos: bullet y sistema francés</h2>
+
+<p>Un instrumento se describe por su calendario de flujos. El proyecto implementa los dos que cubren el balance de un banco comercial.</p>
+
+<h3>Bullet</h3>
+
+<p>Interés periódico sobre el nominal y devolución íntegra del principal al vencimiento. Es la estructura de un bono, de un depósito a plazo y del fondeo interbancario.</p>
+
+<div class="eq">
+CF<sub>k</sub> = N · c · Δ&nbsp;&nbsp; para k = 1…n−1&nbsp;&nbsp;&nbsp;&nbsp; CF<sub>n</sub> = N · c · Δ + N<br>
+<span class="cmt">Δ = frecuencia_pago_meses / 12</span>
+</div>
+
+<h3>Sistema francés (cuota nivelada)</h3>
+
+<p>Cuota constante que amortiza principal e interés a la vez. Es el estándar de la banca minorista: hipotecas, consumo, vehículos.</p>
+
+<div class="eq">
+cuota = N · i / [ 1 − (1+i)<sup>−n</sup> ]&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">i = tasa del período</span><br><br>
+S(k)/S(0) = [ (1+i)<sup>n</sup> − (1+i)<sup>k</sup> ] / [ (1+i)<sup>n</sup> − 1 ]&nbsp;&nbsp;<span class="cmt">saldo insoluto tras k pagos</span><br><br>
+principal<sub>k</sub> = S(k−1) − S(k)
+</div>
+
+<div class="caja clave">
+<div class="titulo">Por qué el sistema de amortización cambia todo</div>
+<p>Una hipoteca francesa a 20 años <b>no expone su saldo íntegro dentro de 20 años</b>: devuelve principal todos los meses. Su duración ronda los 6–8 años, no los 20. Tratar la cartera hipotecaria como bullet sobrestima el riesgo de tasa de forma severa.</p>
+<p>El proyecto necesita el desglose de principal por separado del flujo total, y por eso existen dos funciones: <code>schedule_cashflows</code> devuelve el flujo completo (para valorar) y <code>amortization_schedule</code> devuelve solo el principal (para asignar bandas de gap). Lo que expone al riesgo de tasa es el saldo vivo, no el interés que se cobra por él.</p>
+<p>Con 16.200 M de cartera amortizable en este balance, la diferencia entre los dos métodos de reparto mueve el gap a 12 meses de <b>−13.192 M</b> (bullet) a <b>−10.280 M</b> (amortizado). El informe publica ambos.</p>
+</div>
+
+<h2>11. Duración, duración modificada y convexidad</h2>
+
+<p>La <b>duración de Macaulay</b> es el plazo medio de los flujos ponderado por su valor presente:</p>
+
+<div class="eq">
+D<sub>Mac</sub> = Σ<sub>k</sub> t<sub>k</sub> · PV<sub>k</sub> / Σ<sub>k</sub> PV<sub>k</sub>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">PV<sub>k</sub> = CF<sub>k</sub> · DF(t<sub>k</sub>)</span>
+</div>
+
+<p>La <b>duración modificada</b> es la sensibilidad relativa del valor presente a un desplazamiento paralelo de la curva:</p>
+
+<div class="eq">
+D<sub>mod</sub> = − (1/VP) · ∂VP/∂y
+</div>
+
+<h3>La identidad que la composición continua regala</h3>
+
+<p>Bajo composición continua, <span class="v">VP = Σ CF<sub>k</sub> · e<sup>−y·t<sub>k</sub></sup></span>. Derivando:</p>
+
+<div class="eq">
+∂VP/∂y = Σ CF<sub>k</sub> · (−t<sub>k</sub>) · e<sup>−y·t<sub>k</sub></sup> = − Σ t<sub>k</sub> · PV<sub>k</sub><br><br>
+⟹&nbsp;&nbsp; D<sub>mod</sub> = Σ t<sub>k</sub>·PV<sub>k</sub> / Σ PV<sub>k</sub> = <b>D<sub>Mac</sub></b>
+</div>
+
+<p><b>Son el mismo número.</b> El divisor <span class="v">(1 + y/m)</span> del libro de texto es un artefacto de la composición discreta, no una propiedad de la duración. El proyecto mantiene las dos funciones separadas —<code>macaulay_duration</code> y <code>modified_duration</code>— aunque una llame a la otra, precisamente para que la equivalencia esté documentada y no escondida en un alias.</p>
+
+<h3>Convexidad</h3>
+
+<p>La duración es la primera derivada; la <b>convexidad</b> es la segunda, normalizada:</p>
+
+<div class="eq">
+C = (1/VP) · ∂²VP/∂y²&nbsp;&nbsp;=&nbsp;&nbsp;Σ t<sub>k</sub>² · PV<sub>k</sub> / Σ PV<sub>k</sub>&nbsp;&nbsp;<span class="cmt">bajo composición continua</span>
+</div>
+
+<p>Y la expansión de Taylor del cambio de valor ante un choque <span class="v">Δy</span>:</p>
+
+<div class="eq">
+ΔVP / VP = − D · Δy + ½ · C · Δy² + O(Δy³)
+</div>
+
+<p>El término de convexidad es <b>cuadrático</b> en el choque. Ahí está toda la teoría del hallazgo del Módulo 4: el error de trabajar solo con duración es despreciable para ±50 pb y masivo para ±800 pb, y crece con el cuadrado. Un límite de ALM expresado solo en duración mide bien el riesgo del día a día y subestima precisamente el que motiva tener límites. Se desarrolla en la <a href="#parte9">Parte IX</a>.</p>
+
+<h2>12. Tasa par y su papel en la valoración</h2>
+
+<p>La <b>tasa par</b> es el cupón que hace que un bono bullet cotice exactamente a su nominal:</p>
+
+<div class="eq">
+c* = [ 1 − DF(T) ] / [ Δ · Σ<sub>k</sub> DF(t<sub>k</sub>) ]
+</div>
+
+<p>Se deduce igualando precio y nominal: <span class="v">N = N·c*·Δ·Σ DF(t<sub>k</sub>) + N·DF(T)</span> y despejando. El denominador <span class="v">Δ·Σ DF</span> es lo que en el mercado se llama <b>anualidad</b> o <i>PV01 de la pata fija</i>.</p>
+
+<p>Este concepto reaparece con papel protagonista en el Módulo 4 bajo el nombre de <b>calibración a la par</b>: en lugar de resolver el cupón que iguala precio a nominal, se resuelve el <i>spread</i> constante que hace lo mismo, dejando el cupón contractual fijo. La lógica es idéntica y la consecuencia —aislar el riesgo de tasa del riesgo de crédito— se explica en §54.</p>
+
+<p>En este proyecto <code>par_rate</code> se usa sobre todo como <b>test de sanidad</b>: la invariante «un bono a tasa par vale su nominal» es una de las pruebas unitarias obligatorias del proyecto, y es la forma más barata de detectar un error de signo, de frecuencia o de convención en toda la maquinaria de descuento.</p>
+
+<!-- ==================== PARTE III ==================== -->
+<h1 id="parte3"><span class="num">Parte III</span>Módulo 0: la construcción del banco sintético</h1>
+
+<p class="nota">Código: <code>src/data_gen.py</code>, <code>config/params.py</code>. Produce cinco tablas —tasa de política, curvas, tasas de depósito, saldos de depósito e inventario de instrumentos— más el archivo <code>data/ground_truth.json</code> con los parámetros verdaderos.</p>
+
+<h2>13. Por qué generar datos en lugar de usarlos reales</h2>
+
+<p>La decisión más consecuente del proyecto se toma antes de escribir una línea de finanzas. Con datos reales de un banco, <b>la beta verdadera de los depósitos es inobservable</b>: es un parámetro de un proceso latente que nadie ha medido nunca. Un Módulo 2 sobre datos reales solo podría reportar un número —«estimamos β⁺ = 0,27»— sin contraste posible.</p>
+
+<p>Generando el banco, ese parámetro lo fija el proyecto. Y entonces el Módulo 2 puede reportar su <b>error</b>: «estimamos 0,275 contra un valor verdadero de 0,25; error +0,025». Eso es exactamente lo que un validador independiente de modelos pediría, y con datos reales es imposible.</p>
+
+<div class="caja clave">
+<div class="titulo">El objetivo real del Módulo 0</div>
+<p>El objetivo del proyecto no es estimar bien un banco concreto: es <b>demostrar que las estimaciones del Módulo 2 son correctas</b>. Generar el banco es lo que convierte esa demostración en algo verificable en lugar de en una afirmación.</p>
+</div>
+
+<div class="caja critica">
+<div class="titulo">Y el costo, dicho por delante</div>
+<p>Esa misma elección introduce <b>circularidad</b>. El estimador del Módulo 2 es, en esencia, el inverso correctamente especificado del generador. Que recupere la beta con error menor a 0,05 demuestra que el código no tiene errores y que la especificación es invertible; <b>no demuestra que el método funcione sobre datos reales</b>, donde la forma funcional del proceso es desconocida y el error de especificación domina al error de muestreo por un margen amplio.</p>
+<p>Es la crítica más seria que se le puede hacer a este proyecto y se desarrolla en la <a href="#parte11">Parte XI</a>. Aquí basta con dejarla planteada antes de que el lector la descubra por su cuenta.</p>
+</div>
+
+<h3>Disciplina observable / latente</h3>
+
+<p>Generar el banco crea una tentación inmediata: usar los parámetros verdaderos donde no toca. El proyecto la ataja estructuralmente. Las series <b>latentes</b> —el núcleo verdadero de cada depósito, la componente de migración— viajan en <code>DatasetBundle.latentes</code>, un objeto separado de las tablas observables. Los Módulos 1 a 4 <b>no las ven</b> salvo para reportar el error de estimación.</p>
+
+<p>El propio <code>ground_truth.json</code> lleva una nota que lo dice sin ambigüedad: <i>«Este archivo es la respuesta del examen: el Módulo 2 solo debe leerlo para reportar su error de estimación, nunca para estimar.»</i></p>
+
+<h2>14. La tasa de política: Vasicek más capa de decisión de comité</h2>
+
+<p>Todo el sistema cuelga de una serie: la tasa de referencia mensual a 120 meses. Se genera en dos capas, y la segunda es la que importa para ALM.</p>
+
+<h3>Capa 1 — el proceso latente de Vasicek</h3>
+
+<p>El modelo de Vasicek (1977) es el proceso de reversión a la media más simple para una tasa corta:</p>
+
+<div class="eq">
+dr<sub>t</sub> = κ (θ − r<sub>t</sub>) dt + σ dW<sub>t</sub><br><br>
+<span class="cmt">discretización de Euler-Maruyama, con Δt = 1/12:</span><br>
+r<sub>t</sub> = r<sub>t−1</sub> + κ (θ − r<sub>t−1</sub>) Δt + σ √Δt · ε<sub>t</sub>,&nbsp;&nbsp; ε<sub>t</sub> ~ N(0,1)
+</div>
+
+<p>Con <span class="v">κ</span> la velocidad de reversión, <span class="v">θ</span> el nivel de largo plazo y <span class="v">σ</span> la volatilidad instantánea. La solución exacta tiene media <span class="v">θ + (r<sub>0</sub>−θ)e<sup>−κt</sup></span> y varianza <span class="v">σ²(1−e<sup>−2κt</sup>)/2κ</span>; la discretización de Euler es suficiente aquí porque el objetivo no es valorar derivados de tasa sino producir una trayectoria plausible.</p>
+
+<p>La novedad de este proyecto es que <b>θ, κ y σ se mueven por tramos</b>, con rampas lineales dentro de cada régimen, según una narrativa macroeconómica explícita:</p>
+
+<table>
+<thead><tr><th style="width:10%" class="c">Meses</th><th style="width:20%">Régimen</th><th class="c">θ inicio → fin</th><th class="c">κ</th><th class="c">σ</th><th class="c">Pendiente 10A−3M</th></tr></thead>
+<tbody>
+<tr><td class="c">1–30</td><td>Tasas bajas estables</td><td class="c">1,50% → 1,50%</td><td class="c">0,8</td><td class="c">0,35%</td><td class="c">+150 pb</td></tr>
+<tr><td class="c">31–54</td><td>Ciclo de alzas</td><td class="c">1,50% → 5,50%</td><td class="c">2,5</td><td class="c">0,60%</td><td class="c">+150 → <b>−80 pb</b></td></tr>
+<tr><td class="c">55–84</td><td>Meseta alta</td><td class="c">5,25% → 5,25%</td><td class="c">1,5</td><td class="c">0,40%</td><td class="c"><b>−80 → +10 pb</b></td></tr>
+<tr><td class="c">85–120</td><td>Normalización</td><td class="c">5,25% → 3,00%</td><td class="c">1,2</td><td class="c">0,50%</td><td class="c">+10 → +100 pb</td></tr>
+</tbody>
+<caption>Los cuatro regímenes. κ = 2,5 en el ciclo de alzas codifica que un banco central restrictivo se mueve con convicción. La pendiente cruza a negativo y se mantiene invertida en los meses ≈ 55–81.</caption>
+</table>
+
+<h3>Capa 2 — la decisión de comité, y por qué es indispensable</h3>
+
+<p>Un Vasicek puro produce una tasa de política que se mueve unos <b>7 pb cada mes</b>, en ambas direcciones, sin parar. <b>Ningún banco central hace eso.</b> Las tasas de política se mueven en escalones de 25 o 50 pb, en fechas de comité, y se quedan quietas entre medias.</p>
+
+<p>La capa de comité toma la tasa latente y publica una tasa discreta:</p>
+
+<div class="eq">
+si | r<sup>lat</sup><sub>t</sub> − r<sup>pub</sup><sub>t−1</sub> | ≥ h:&nbsp;&nbsp;<span class="cmt">histéresis</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;objetivo = redondear( r<sup>lat</sup><sub>t</sub> / e ) · e&nbsp;&nbsp;<span class="cmt">escalón</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;movimiento = recortar( objetivo − r<sup>pub</sup><sub>t−1</sub>, ±M )&nbsp;&nbsp;<span class="cmt">tope por reunión</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;r<sup>pub</sup><sub>t</sub> = máx( r<sup>pub</sup><sub>t−1</sub> + movimiento, piso )<br>
+si no:&nbsp;&nbsp; r<sup>pub</sup><sub>t</sub> = r<sup>pub</sup><sub>t−1</sub><br><br>
+<span class="cmt">e = 25 pb · h = 37,5 pb (escalón y medio) · M = 75 pb · piso = 0</span>
+</div>
+
+<div class="caja clave">
+<div class="titulo">Por qué la persistencia es la variable crítica de ALM</div>
+<p>Esto no es cosmética. <b>La persistencia es lo que convierte un desfase de repreciación en margen ganado o perdido durante trimestres.</b></p>
+<p>Si la tasa oscilara cada mes en ambas direcciones, un banco pasivo-sensible perdería en unos meses y ganaría en otros, y el gap se promediaría a cero: el riesgo de tasa sería un problema de segundo orden y no habría un marco regulatorio dedicado. Es la <i>persistencia</i> del nivel de tasas —que un ciclo de alzas dura dos años y una meseta otros dos— lo que hace que un descalce se acumule y se convierta en pérdida real.</p>
+<p>Un generador sin esta capa produciría un banco cuyo IRRBB es irrelevante, y todos los resultados del proyecto serían artefactos del ruido.</p>
+</div>
+
+<p>La <b>histéresis de 37,5 pb</b> —escalón y medio— es lo que produce los períodos de quietud: el latente puede moverse hasta 37 pb sin que se publique nada. El <b>tope de 75 pb por reunión</b> impide que un rebote grande del latente se traduzca en un salto de 200 pb, que ningún comité haría de golpe.</p>
+
+<h2>15. La curva de rendimiento y la inversión deliberada</h2>
+
+<p>Para cada uno de los 120 meses se construye una curva Nelson-Siegel completa:</p>
+
+<ol>
+<li>La <b>curvatura β<sub>2</sub></b> sigue un AR(1) que revierte al nivel de curvatura del régimen vigente:
+<div class="eq">β<sub>2,t</sub> = φ·β<sub>2,t−1</sub> + (1−φ)·β<sub>2</sub><sup>régimen</sup> + σ<sub>c</sub>·ε<sub>t</sub>,&nbsp;&nbsp;φ = 0,85</div>
+</li>
+<li>Se resuelven <b>(β<sub>0</sub>, β<sub>1</sub>)</b> por anclaje (§7): <span class="v">y(3M) = r<sub>t</sub></span> e <span class="v">y(10A) = r<sub>t</sub> + pendiente<sub>t</sub></span>.</li>
+<li>Se añade <b>ruido idiosincrásico por tenor</b> de 5 pb, porque una curva real no cae exactamente sobre una parametrización de tres factores.</li>
+<li>Se <b>fuerza la monotonía de <span class="v">y·τ</span></b>: si el ruido invirtió el orden entre dos nodos vecinos, se empuja el infractor lo mínimo necesario.</li>
+</ol>
+
+<pre>w = ceros * tenores
+for k in range(1, len(w)):
+    if w[k] &lt;= w[k - 1]:
+        w[k] = w[k - 1] + 1e-8
+return w / tenores</pre>
+
+<p>Ese último paso es una <b>proyección sobre el conjunto admisible</b>: garantiza el control #6 (factores de descuento positivos y decrecientes) sin tener que rechazar y regenerar curvas, lo que rompería la reproducibilidad al consumir números aleatorios de forma dependiente del resultado.</p>
+
+<div class="caja">
+<div class="titulo">La inversión de curva es un requisito, no un adorno</div>
+<p>La pendiente objetivo cruza a <b>−80 pb</b> dentro del ciclo de alzas y se mantiene negativa la mayor parte de la meseta (meses ≈ 55–81). Sin un tramo de curva invertida en la historia, el escenario de <b>empinamiento</b> del Módulo 4 no tendría contenido económico —sería un choque de empinamiento sobre una curva que ya estaba empinada, y su resultado sería trivial—.</p>
+<p>Además, la inversión es realista: es lo que ocurre al final de todo ciclo restrictivo, cuando el mercado empieza a descontar los recortes que vendrán. Codificarla en el generador es lo que permite que los seis escenarios midan seis cosas distintas.</p>
+</div>
+
+<h2>16. Tasas de depósito: la beta asimétrica y su literatura</h2>
+
+<p>Este es el corazón conceptual del proyecto. La <b>beta de depósito</b> es la fracción de un movimiento de la tasa de mercado que el banco traslada a la tasa que paga a sus clientes. Es el número que un ALCO cita literalmente así: <i>«de una subida de 100 pb trasladamos 25»</i>.</p>
+
+<h3>Qué dice la literatura</h3>
+
+<p>El hecho estilizado —que las tasas de depósito son <b>rígidas al alza y flexibles a la baja</b>— está documentado desde los años noventa:</p>
+
+<ul>
+<li><b>Hannan y Berger (1991)</b>, <i>The Rigidity of Prices: Evidence from the Banking Industry</i>. Muestran que la rigidez de precios de los depósitos es asimétrica y que aumenta con la concentración del mercado.</li>
+<li><b>Neumark y Sharpe (1992)</b>, <i>Market Structure and the Nature of Price Rigidity</i>. Encuentran que los bancos en mercados concentrados suben las tasas de depósito más despacio y las bajan más rápido.</li>
+<li><b>Drechsler, Savov y Schnabl (2017, 2021)</b>, sobre el <i>deposit channel</i> de la política monetaria y la franquicia de depósitos como cobertura de tasa.</li>
+</ul>
+
+<p>La explicación económica no es picardía comercial: es <b>la respuesta racional de una franquicia con poder de fijación de precios</b>. El cliente transaccional mantiene su cuenta por servicio —nómina, domiciliaciones, medios de pago— y no por precio, así que su elasticidad al alza es baja. Bajar la tasa, en cambio, no cuesta nada porque nadie se va por 20 pb menos en una cuenta corriente.</p>
+
+<h3>La especificación implementada</h3>
+
+<div class="eq">
+d*<sub>t</sub> = d*<sub>t−1</sub> + β<sup>±</sup> · Δr<sub>t</sub>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">traspaso asimétrico del cambio</span><br>
+d*<sub>t</sub> ← d*<sub>t</sub> + κ · ( α + β̄·r<sub>t</sub> − d*<sub>t</sub> )&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">ancla competitiva lenta</span><br>
+d<sub>t</sub> = d<sub>t−1</sub> + λ · ( d*<sub>t</sub> − d<sub>t−1</sub> ) + ε<sub>t</sub>&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">ajuste parcial</span><br><br>
+<span class="cmt">β<sup>±</sup> = β⁺ si Δr ≥ 0, β⁻ si Δr &lt; 0 &nbsp;·&nbsp; β̄ = (β⁺+β⁻)/2 &nbsp;·&nbsp; κ = 0,02 mensual</span>
+</div>
+
+<p>Los tres bloques hacen tres cosas distintas y hay que no confundirlos:</p>
+
+<table>
+<thead><tr><th style="width:20%">Bloque</th><th>Qué modela</th></tr></thead>
+<tbody>
+<tr><td><b>Traspaso β<sup>±</sup></b></td><td>La <b>cuantía</b>: cuánto de un movimiento de mercado acaba en la tasa del cliente. Es asimétrico y es el parámetro que el Módulo 2 debe recuperar.</td></tr>
+<tr><td><b>Ajuste parcial λ</b></td><td>El <b>momento</b>: cuánto tarda. Con λ = 0,30 en vista, solo un tercio del traspaso ocurre en el mes del movimiento y el resto se reparte en los siguientes. Es el modelo de ajuste parcial clásico (<i>partial adjustment</i>).</td></tr>
+<tr><td><b>Ancla κ</b></td><td>La <b>competencia</b>: impide que el efecto trinquete acumulado lleve la tasa a un nivel absurdo tras un ciclo completo. Revierte muy despacio (2% mensual) al nivel competitivo simétrico.</td></tr>
+</tbody>
+</table>
+
+<h3>Los valores verdaderos</h3>
+
+<table>
+<thead><tr><th>Producto</th><th class="c">β⁺ (sube)</th><th class="c">β⁻ (baja)</th><th class="c">λ</th><th class="c">α</th><th>Lectura</th></tr></thead>
+<tbody>
+<tr><td><b>Vista</b></td><td class="c">0,25</td><td class="c">0,55</td><td class="c">0,30</td><td class="c">5 pb</td><td>Franquicia transaccional fuerte. Traslada un cuarto de las subidas.</td></tr>
+<tr><td><b>Ahorro</b></td><td class="c">0,45</td><td class="c">0,75</td><td class="c">0,35</td><td class="c">15 pb</td><td>Mismo cliente, pero saldo que compara precio.</td></tr>
+<tr><td><b>Plazo</b></td><td class="c">0,85</td><td class="c">0,90</td><td class="c">0,70</td><td class="c">20 pb</td><td>Producto de precio puro. Casi simétrico y casi completo.</td></tr>
+</tbody>
+<caption>Ground truth registrado en <code>data/ground_truth.json</code>. β⁻ &gt; β⁺ en los tres, con la asimetría desapareciendo a medida que el producto se vuelve sensible a precio.</caption>
+</table>
+
+<div class="caja clave">
+<div class="titulo">Consecuencia inmediata para el resto del proyecto</div>
+<p>Con β⁺(vista) = 0,25, <b>el banco retiene el 75% de una subida de tasas en su margen</b>. Eso, aplicado a 11.000 M de depósitos a la vista, es la mitad de la explicación de por qué el NII de este banco mejora ante +200 pb.</p>
+<p>Y con β⁻(vista) = 0,55, cuando las tasas bajan el banco recorta más de lo que pierde en el activo. Esa es la otra mitad —la que produce el resultado sorprendente del Módulo 3—.</p>
+</div>
+
+<h2>17. La patología de signo: una corrección de especificación completa</h2>
+
+<p>El diseño original del proyecto especificaba el proceso de otra forma, y <b>tomada al pie de la letra estaba mal</b>. Merece contarse entero porque es el error de modelado más instructivo del proyecto y porque su detección es exactamente lo que un validador independiente debe hacer.</p>
+
+<h3>La especificación errónea</h3>
+
+<div class="eq">
+d<sub>t</sub> = d<sub>t−1</sub> + λ · ( α + β<sup>±</sup> · r<sub>t</sub> − d<sub>t−1</sub> ) + ε<sub>t</sub><br>
+<span class="cmt">con β<sup>±</sup> aplicado al NIVEL objetivo</span>
+</div>
+
+<h3>Por qué falla</h3>
+
+<p>Evalúese el nivel objetivo con la tasa de referencia en 5%, para vista (α = 5 pb):</p>
+
+<table>
+<thead><tr><th>Régimen</th><th>Nivel objetivo</th><th class="c">Valor</th></tr></thead>
+<tbody>
+<tr><td>Subida (usa β⁺ = 0,25)</td><td>0,0005 + 0,25 × 0,05</td><td class="c">1,30%</td></tr>
+<tr><td>Bajada (usa β⁻ = 0,55)</td><td>0,0005 + 0,55 × 0,05</td><td class="c">2,80%</td></tr>
+</tbody>
+</table>
+
+<p>El primer recorte de tasas —el mes en que <span class="v">Δr</span> pasa de positivo a negativo— hace que el objetivo <b>salte 150 pb hacia arriba</b>. Es decir: <b>la fórmula dice que cuando el banco central baja, el banco le sube la tasa al depositante.</b></p>
+
+<div class="caja critica">
+<div class="titulo">El síntoma que lo delató</div>
+<p>Generando con esa especificación, la beta estimada de vista salía en <b>−0,15</b>. Una beta negativa no es «una estimación mala»: es económicamente imposible. Ningún banco baja la tasa que paga cuando el mercado sube. El signo era el diagnóstico.</p>
+</div>
+
+<h3>La corrección y por qué es la correcta</h3>
+
+<p><b>La asimetría pertenece al traspaso del cambio, no al nivel.</b> Y no es solo una cuestión de que funcione: es cómo la industria usa la palabra. Cuando un tesorero dice «nuestra beta de vista es 0,25» quiere decir <i>de una subida de 100 pb trasladamos 25</i>, no <i>nuestra tasa de equilibrio es un cuarto de la de mercado</i>.</p>
+
+<p>La reescritura mueve β<sup>±</sup> a multiplicar <span class="v">Δr<sub>t</sub></span>. Pero eso introduce un problema nuevo: un ciclo completo de subida y bajada de la misma magnitud dejaría la tasa <b>más baja que al empezar</b>, porque se subió con β⁺ y se bajó con β⁻. Es el <b>efecto trinquete</b>, y es real —los bancos sí ganan terreno ciclo a ciclo— pero no es ilimitado: la competencia acaba imponiéndose.</p>
+
+<p>De ahí el ancla κ. Con κ = 0,02 mensual, el objetivo revierte lentamente al nivel competitivo simétrico <span class="v">α + β̄·r</span>. Sin ella, tras un ciclo completo de +400/−225 pb la tasa de vista terminaría en 19 pb: no absurdo para una cuenta transaccional, pero sí para una de ahorro.</p>
+
+<div class="caja">
+<div class="titulo">Lo que esto enseña</div>
+<p>Tres cosas, y las tres son transferibles a cualquier proyecto de modelado:</p>
+<ul class="compacta">
+<li>Una especificación puede ser <b>sintácticamente correcta y económicamente absurda</b>, y solo se detecta evaluándola en casos concretos con números reales.</li>
+<li>El <b>signo</b> de un parámetro estimado es un diagnóstico más potente que su magnitud. Una beta de 0,15 en lugar de 0,25 es una discusión; una beta de −0,15 es un error.</li>
+<li>La forma correcta de escribir un modelo es a menudo <b>la forma en que los profesionales hablan de él</b>. La frase «trasladamos 25 de cada 100» ya contenía la especificación correcta.</li>
+</ul>
+</div>
+
+<h2>18. Saldos de depósito: descomposición núcleo/volátil</h2>
+
+<p>Los saldos se generan con una descomposición estructural <span class="v">B<sub>t</sub> = C<sub>t</sub> + V<sub>t</sub></span>, y la forma exacta del núcleo es una decisión de identificación, no de realismo.</p>
+
+<h3>El núcleo como stock con runoff y originación</h3>
+
+<div class="eq">
+C<sub>t</sub> = C<sub>t−1</sub> · e<sup>−λ<sub>d</sub>/12</sup> + N<sub>t</sub>,&nbsp;&nbsp;&nbsp;&nbsp; λ<sub>d</sub> = 1 / vida_promedio<br>
+<span class="cmt">con N<sub>t</sub> calibrado para que la tendencia neta observada sea +4,5% anual</span>
+</div>
+
+<div class="caja clave">
+<div class="titulo">Por qué no una simple tendencia decreciente</div>
+<p>Si el núcleo fuera solo una tendencia, <b>la vida promedio no estaría presente en los datos</b> y el Módulo 2 estaría «recuperando» un parámetro que nunca se usó para generar. La construcción runoff + originación hace que 4,2 años sea un parámetro estructural real: el stock efectivamente se va a esa velocidad y efectivamente se repone.</p>
+<p>Ahora bien —y esto es el hallazgo del Módulo 2— <b>estructural no es lo mismo que identificable</b>. La vida está en el proceso; no está en la serie agregada. Se demuestra en §37.</p>
+</div>
+
+<h3>La componente volátil</h3>
+
+<p>Cuatro efectos, cada uno con su justificación:</p>
+
+<table>
+<thead><tr><th style="width:22%">Componente</th><th>Especificación</th><th style="width:38%">Por qué</th></tr></thead>
+<tbody>
+<tr><td><b>Estacionalidad</b></td><td>Factor multiplicativo por mes calendario: +3,5% en diciembre, −2,0% en enero, −2,5% en abril.</td><td>Aguinaldos y cierre de ejercicio en diciembre; resaca en enero; salidas fiscales en abril. Es el patrón más robusto de cualquier serie de depósitos minoristas.</td></tr>
+<tr><td><b>AR(1)</b></td><td>v<sub>t</sub> = φ·v<sub>t−1</sub> + σ·ε<sub>t</sub>, con φ = 0,60</td><td>Ruido con memoria. Sin persistencia, el estimador de proporción estable vería solo ruido blanco y sobrestimaría la estabilidad.</td></tr>
+<tr><td><b>Migración</b></td><td>Proporcional al exceso de (r − d) sobre un spread normal de 150 pb, con inercia φ = 0,70. γ = 2,0 en vista, 3,0 en ahorro.</td><td><b>Deposit mix shift</b>. Cuando el diferencial se abre, el cliente mueve saldo de vista a plazo. Lo que sale de vista <b>entra a plazo</b>: el fondeo se traslada, no se evapora.</td></tr>
+<tr><td><b>Estrés</b></td><td>Mes 96: caídas de 5% y 4% en dos meses; recuperación de dos tercios en seis meses; erosión permanente del 2% del núcleo.</td><td>Episodio de liquidez. Genera el mínimo que fija la proporción estable estimada, y contamina la serie con un salto <b>permanente</b> de nivel.</td></tr>
+</tbody>
+</table>
+
+<div class="caja">
+<div class="titulo">Por qué la migración importa más de lo que parece</div>
+<p>El <i>deposit mix shift</i> es <b>media razón por la que el costo de fondeo de un banco sube en un ciclo de alzas aunque ninguna beta por producto se mueva</b>. El banco no subió precios: cambió de producto. Saldo que estaba en una cuenta al 0,3% aparece en un depósito a plazo al 4,5%, y el costo medio ponderado sube sin que ningún gestor haya decidido nada.</p>
+<p>Es un efecto que muchos modelos de NII omiten y que puede explicar varios cientos de puntos básicos de deterioro en un ciclo. Aquí está en el generador, aunque el Módulo 3 no lo proyecta hacia adelante (balance constante) — lo que es una limitación declarada.</p>
+</div>
+
+<h3>El anclaje de nivel</h3>
+
+<p>La última observación de cada producto se escala al <i>share</i> del perfil de balance. Es una decisión de consistencia: la serie histórica y la tabla de instrumentos tienen que decir <b>lo mismo el último día</b>, que es la fecha de corte desde la que se proyecta todo.</p>
+
+<h3>La separación transitorio/permanente en el estrés</h3>
+
+<p>El episodio del mes 96 devuelve <b>dos series separadas</b>, y no es un detalle de implementación:</p>
+
+<ul>
+<li><b>Transitorio</b>: la corrida propiamente dicha, que se recupera en su mayor parte.</li>
+<li><b>Permanente</b>: la erosión del núcleo que <b>no vuelve</b> — clientes que se fueron a otro banco y no regresan.</li>
+</ul>
+
+<p>Separarlas importa porque el Módulo 2 debe estimar la vida del núcleo sobre una serie que contiene un <b>salto permanente de nivel</b>, que es exactamente el tipo de contaminación que rompe una estimación ingenua de persistencia. Un banco real tiene episodios así en su historia y su modelo tiene que sobrevivirlos.</p>
+
+<h2>19. Cohortes (vintages) y sesgo de supervivencia</h2>
+
+<p>El inventario tiene ~3.000 filas, y cada una es una <b>cohorte de producto</b> —el conjunto de hipotecas a 20 años originadas en marzo de 2018—, no un contrato individual.</p>
+
+<div class="caja clave">
+<div class="titulo">Por qué las fechas de originación tienen que estar repartidas</div>
+<p>Si todo el balance se originara el mismo día, <b>repactaría entero dentro de una sola banda temporal</b>, y tanto el gap del Módulo 1 como el EVE del Módulo 4 serían artefactos del generador en lugar de resultados. El escalonamiento de vencimientos y repreciaciones es la condición para que las métricas midan algo.</p>
+</div>
+
+<h3>La decisión que más importa: la tasa de la cohorte</h3>
+
+<p>La tasa contractual de cada cohorte a tasa fija se fija con la curva <b>de su mes de originación</b>, no con la de hoy:</p>
+
+<div class="eq">
+tasa<sub>cohorte</sub> = nominal( y<sub>mes_orig</sub>(plazo del contrato) ) + spread de crédito
+</div>
+
+<p>Este es <b>el mecanismo económico central del proyecto</b>. La cartera hipotecaria originada en los meses 1–30, con la referencia al 1,5%, sigue viva hoy con la referencia al 3,3%. Esas hipotecas rinden mucho menos que el mercado actual y por tanto valen mucho menos que su nominal en cuanto se descuenta a la curva de hoy y aún menos si se le suman 200 pb. <b>Es esa cartera la que produce la pérdida de EVE del Módulo 4.</b></p>
+
+<p>Si todas las cohortes se originaran a la tasa de hoy, el deterioro de EVE ante +200 pb sería mucho menor y sería un artefacto de la duración pura en lugar del resultado combinado de duración y cupón desalineado. En términos de 2023: es la diferencia entre modelar SVB y no modelarlo.</p>
+
+<h3>Sesgo de supervivencia</h3>
+
+<p>Las cohortes se generan por <b>sobre-generación y filtro</b>: se muestrean muchas más de las necesarias con fechas de originación uniformes en los 120 meses, y luego se descartan las que ya vencieron. Es más lento que muestrear directamente la distribución condicional de cohortes vivas, pero reproduce la composición correcta.</p>
+
+<p>Y esa composición es un <b>hecho real, no un sesgo a corregir</b>: en un producto de plazo corto solo sobreviven las cohortes recientes. La cartera de depósitos a plazo de cualquier banco está toda originada en los últimos dos años, <i>y por eso repacta rápido</i>. El sesgo de supervivencia aquí es la señal, no el ruido.</p>
+
+<h3>La fracción de principal vivo</h3>
+
+<p>Una cohorte amortizable no entra al balance por su monto originado sino por su <b>principal vivo</b>:</p>
+
+<div class="eq">
+S(k)/S(0) = [ (1+i)<sup>n</sup> − (1+i)<sup>k</sup> ] / [ (1+i)<sup>n</sup> − 1 ]<br>
+<span class="cmt">k = pagos ya realizados = edad de la cohorte / frecuencia</span>
+</div>
+
+<p>Sin este factor, una cohorte hipotecaria de hace ocho años pesaría por su monto original cuando en realidad ya devolvió cerca de un tercio del principal. El efecto agregado es que <b>el libro parece más viejo —y por tanto más corto— de lo que es</b>, y la duración del activo sale sesgada a la baja. Es un detalle de contabilidad de cohortes, no de finanzas, y es de los que se olvidan al construir balances sintéticos.</p>
+
+<h3>Dos decisiones de modelado que conviene registrar</h3>
+
+<table>
+<thead><tr><th style="width:18%">Rubro</th><th>Decisión y por qué</th></tr></thead>
+<tbody>
+<tr><td><b>Efectivo</b></td><td>El perfil de balance lo etiquetaba «no sensible / overnight», que son <b>dos cosas distintas</b>. Se modela como variable con repreciación mensual y <i>spread negativo</i> (−25 pb): el encaje remunerado repacta de inmediato, así que es de los activos <b>más</b> sensibles del balance. Lo que no es, es fuente de margen: rinde por debajo de la referencia, y por eso un banco con exceso de liquidez ve caer su NIM. Tratarlo como tasa cero regalaba ~60 M de ingreso anual.</td></tr>
+<tr><td><b>Tarjetas</b></td><td>La tasa nominal (referencia + 1400 pb ≈ 17%) <b>no se devenga sobre todo el saldo</b>: buena parte de la cartera es transaccional y se paga dentro del período de gracia. <code>revolving_ratio = 0,35</code> es la fracción que efectivamente devenga. Aplicar la tasa plena a los 3.600 M inflaba el NIM a ~4,7% y hacía inalcanzable el objetivo de 2,8–3,6%.</td></tr>
+</tbody>
+</table>
+
+<h2>20. Ground truth y la disciplina observable/latente</h2>
+
+<p>El archivo <code>data/ground_truth.json</code> registra todos los parámetros verdaderos. Un campo merece comentario aparte porque su confusión tiene consecuencia regulatoria directa.</p>
+
+<h3>Vida promedio ≠ half-life</h3>
+
+<p>Bajo decaimiento exponencial con tasa λ:</p>
+
+<div class="eq">
+vida promedio (mean life) = 1/λ<br>
+half-life = ln 2 / λ<br><br>
+vida promedio = half-life / ln 2 = half-life × 1,4427
+</div>
+
+<p><b>IRRBB capea la vida promedio de repreciación</b> del núcleo: 5 años para minorista transaccional, 4,5 para minorista no transaccional, 4 para mayorista.</p>
+
+<table>
+<thead><tr><th>Si 4,2 años fuera…</th><th class="c">Vida promedio</th><th class="c">Tope vista</th><th>Veredicto</th></tr></thead>
+<tbody>
+<tr><td>Vida promedio (lo que es)</td><td class="c">4,20 a</td><td class="c">5,0 a</td><td class="pos">Holgado</td></tr>
+<tr><td>Half-life (lo que no es)</td><td class="c">6,06 a</td><td class="c">5,0 a</td><td class="neg">Excede el tope</td></tr>
+</tbody>
+</table>
+
+<p>La distinción no es pedante: cambia si el núcleo verdadero del banco cumple o no con el marco estandarizado. <code>build_ground_truth</code> registra <b>ambas cifras</b> explícitamente para que ningún módulo posterior las confunda.</p>
+
+<h3>Reproducibilidad por hash</h3>
+
+<p>El <code>DatasetBundle</code> expone un método <code>hash()</code> que calcula un SHA-256 sobre una serialización canónica de las cinco tablas más el ground truth, con el formato numérico fijado a diez decimales. Fijar el formato no es paranoia: sin él, el hash dependería de la representación en coma flotante por defecto de la versión de pandas instalada, y el control de reproducibilidad fallaría al actualizar una dependencia por razones que no tienen nada que ver con el modelo.</p>
+
+<!-- ==================== PARTE IV ==================== -->
+<h1 id="parte4"><span class="num">Parte IV</span>Módulo 0: validación independiente</h1>
+
+<p class="nota">Código: <code>src/validation.py</code>, ejecutable vía <code>run_module0.py</code>, que devuelve código de salida ≠ 0 si algún control de severidad ERROR falla.</p>
+
+<h2>21. Por qué existe una función de validación separada</h2>
+
+<p>En un banco, la función que construye un modelo y la que lo valida <b>no pueden ser la misma</b>. Esa separación es doctrina supervisora explícita:</p>
+
+<ul>
+<li><b>SR 11-7</b> (Reserva Federal / OCC, 2011), <i>Guidance on Model Risk Management</i>: exige validación independiente, con acceso a los datos y autoridad para vetar el uso del modelo. Introduce el concepto de <i>model risk</i> como categoría de riesgo propia.</li>
+<li><b>TRIM</b> (BCE, 2017–2021), <i>Targeted Review of Internal Models</i>: el equivalente en la eurozona.</li>
+</ul>
+
+<p>La lógica es de incentivos: quien construyó el modelo tiene un interés estructural en que funcione, y ese interés contamina la elección de pruebas. Un archivo <code>validation.py</code> escrito <i>antes</i> de mirar los resultados, cuyo veredicto no se negocia, es la versión artesanal de esa doctrina.</p>
+
+<div class="caja clave">
+<div class="titulo">La distinción ERROR / WARNING</div>
+<p>No es de comodidad. Un <b>ERROR</b> señala que el dataset viola una identidad contable o una consistencia interna, y cualquier resultado calculado sobre él sería basura: bloquea el avance. Un <b>WARNING</b> señala que el dataset es válido pero que algún supuesto quedó tenso, y eso es información que va al informe, no un motivo para parar.</p>
+<p>Confundirlas en cualquier dirección es dañino: convertir todo en ERROR paraliza el proyecto por cuestiones de calibración; convertir todo en WARNING hace el <i>gate</i> decorativo.</p>
+</div>
+
+<h2>22. Los once controles, uno por uno</h2>
+
+<table>
+<thead><tr><th class="c" style="width:5%">#</th><th style="width:30%">Control</th><th class="c" style="width:9%">Sev.</th><th>Qué garantiza y por qué</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>1</b></td><td>Activos = Pasivos + Patrimonio, tolerancia relativa 10<sup>−8</sup></td><td class="c">ERROR</td><td>La identidad contable fundamental. Si no cuadra, ninguna métrica de gap ni de EVE significa nada. La tolerancia es de coma flotante, no de negocio: el balance cuadra <i>exactamente</i> por construcción (los saldos se reescalan al <i>share</i> objetivo) y el control detecta corrupción de datos, no error de modelado.</td></tr>
+<tr><td class="c"><b>2</b></td><td>120 observaciones mensuales consecutivas, sin NaN ni duplicados</td><td class="c">ERROR</td><td>Integridad de las cuatro series temporales. Comprueba longitud, ausencia de duplicados, ausencia de nulos y que el índice coincida exactamente con el rango de fechas esperado. Un hueco silencioso en una serie mensual sesga toda estimación de persistencia.</td></tr>
+<tr><td class="c"><b>3</b></td><td>fecha_repreciación ≤ fecha_vencimiento; tasa fija ⟹ repricing = vencimiento</td><td class="c">ERROR</td><td>Consistencia contractual. Un instrumento no puede repactar después de haber vencido, y uno a tasa fija no repacta nunca —su «repreciación» es su vencimiento—. Esta invariante es la que permite al Módulo 1 y al Módulo 4 usar la misma regla de horizonte sin casos especiales.</td></tr>
+<tr><td class="c"><b>4</b></td><td>Tasa activa por producto &gt; costo medio de fondeo</td><td class="c">ERROR</td><td>Un banco cuyo activo rinde menos que su pasivo no es un banco, es un error de calibración. Se comprueba producto por producto contra el costo de fondeo medio ponderado y se reporta el spread más ajustado.</td></tr>
+<tr><td class="c"><b>5</b></td><td>Curva a 3M dentro de ±25 pb de la referencia, en las 120 fechas</td><td class="c">ERROR</td><td>Cierra el vínculo entre la tasa de política y la curva. Pasa <b>por construcción</b> gracias al anclaje de §7; el control existe para detectar si alguien cambia el método de construcción y rompe el vínculo sin darse cuenta.</td></tr>
+<tr><td class="c"><b>6</b></td><td>Factores de descuento positivos y estrictamente decrecientes</td><td class="c">ERROR</td><td>Ausencia de arbitraje elemental: un dólar dentro de cinco años no puede valer más hoy que un dólar dentro de tres. Se evalúa en 300 plazos por fecha, no solo en los nodos, porque el fallo típico ocurre <i>entre</i> nodos.</td></tr>
+<tr><td class="c"><b>7</b></td><td>Regresión Δd ~ Δr con rezagos: t &gt; 3 y R² &gt; 0,5</td><td class="c">ERROR</td><td>Demuestra que el proceso generador de tasas de depósito <b>es recuperable con la especificación correcta</b>. Ver §23: el umbral original era inalcanzable.</td></tr>
+<tr><td class="c"><b>8</b></td><td>Beta OLS ingenua dentro de ±0,15 del promedio ponderado de β⁺/β⁻</td><td class="c">WARNING</td><td>Demuestra que el estimador <b>ingenuo falla</b>. Ver §24.</td></tr>
+<tr><td class="c"><b>9</b></td><td>Saldos &gt; 0; sin saltos &gt; 15% fuera de la ventana del estrés</td><td class="c">WARNING</td><td>Cordura de las series de saldo. La ventana del estrés (meses 95–98) está exenta <b>por diseño y declarada en config</b>: el salto de ahí no es un defecto, es el episodio que se quiso generar.</td></tr>
+<tr><td class="c"><b>10</b></td><td>Los seis objetivos de calibración dentro de rango</td><td class="c">WARNING</td><td>Ver §25. Es WARNING porque un objetivo incumplido es información que va al informe, no evidencia de que los datos estén corruptos.</td></tr>
+<tr><td class="c"><b>11</b></td><td>Reproducibilidad: misma semilla ⟹ mismo hash</td><td class="c">ERROR</td><td>Se genera el dataset dos veces con la misma semilla y se comparan los SHA-256. Detalle de diseño: si no se le pasa un segundo hash, el control se marca <b>fallido</b>, no omitido. Un control de reproducibilidad que se saltea silenciosamente no es un control.</td></tr>
+</tbody>
+</table>
+
+<h2>23. El control #7: cuando el umbral es matemáticamente inalcanzable</h2>
+
+<p>El diseño original pedía R² &gt; 0,5 en la regresión <b>contemporánea</b> Δd ~ Δr. Medido con ruido cero, vista topa en R² = 0,50 exactamente y no puede pasar de ahí.</p>
+
+<h3>La derivación</h3>
+
+<p>Con ajuste parcial puro y traspaso β, ignorando el ancla y el ruido:</p>
+
+<div class="eq">
+d*<sub>t</sub> = d*<sub>t−1</sub> + β·Δr<sub>t</sub>&nbsp;&nbsp;⟹&nbsp;&nbsp;Δd*<sub>t</sub> = β·Δr<sub>t</sub><br>
+d<sub>t</sub> = d<sub>t−1</sub> + λ·( d*<sub>t</sub> − d<sub>t−1</sub> )<br><br>
+Δd<sub>t</sub> = λ·( d*<sub>t</sub> − d<sub>t−1</sub> )
+</div>
+
+<p>El término <span class="v">d*<sub>t</sub> − d<sub>t−1</sub></span> es la <b>brecha acumulada</b> entre objetivo y tasa vigente, que contiene toda la historia de movimientos pasados aún no trasladados. Sustituyendo recursivamente, la respuesta al impulso de <span class="v">Δd</span> ante un <span class="v">Δr</span> unitario es:</p>
+
+<div class="eq">
+∂Δd<sub>t+k</sub> / ∂Δr<sub>t</sub> = λ·β·(1−λ)<sup>k</sup>,&nbsp;&nbsp;k = 0, 1, 2, …<br><br>
+<span class="cmt">suma sobre todos los k: λβ · Σ(1−λ)<sup>k</sup> = λβ / λ = β ✓</span>
+</div>
+
+<p>Con λ = 0,30, la fracción del traspaso que ocurre <b>en el mes del movimiento</b> es λ = 0,30. El resto llega en meses posteriores, <b>cuando Δr ya vale cero</b>. Una regresión contemporánea de Δd sobre Δr solo puede explicar la parte simultánea; el 70% restante entra en el residuo como si fuera ruido.</p>
+
+<div class="caja critica">
+<div class="titulo">No era un problema de calibración</div>
+<p>El umbral no fallaba porque los parámetros estuvieran mal elegidos: fallaba <b>por construcción del propio modelo</b>. Ninguna elección de β, α o σ podía llevar el R² contemporáneo de vista por encima de 0,50 mientras λ = 0,30.</p>
+<p>Ante eso hay dos salidas honestas: bajar el umbral (declarando por qué) o cambiar el estimador. Se eligió lo segundo, porque el estimador contemporáneo <b>estaba mal</b>, no solo era exigente.</p>
+</div>
+
+<h3>La respecificación</h3>
+
+<p>El control ahora regresa Δd sobre Δr <b>y sus seis rezagos</b>, y exige t &gt; 3 y R² &gt; 0,5 sobre la <b>suma</b> de coeficientes:</p>
+
+<div class="eq">
+Δd<sub>t</sub> = a<sub>0</sub> + Σ<sub>k=0..L</sub> a<sub>k</sub> · Δr<sub>t−k</sub> + ε<sub>t</sub>&nbsp;&nbsp;&nbsp;&nbsp;Σβ̂ = Σ<sub>k</sub> a<sub>k</sub>
+</div>
+
+<table>
+<thead><tr><th>Producto</th><th class="c">R² con rezagos</th><th class="c">R² contemporáneo</th><th class="c">Σβ̂</th><th class="c">β̄ verdadero</th></tr></thead>
+<tbody>
+<tr><td>Vista</td><td class="c">0,69</td><td class="c">0,50</td><td class="c">0,32</td><td class="c">0,40</td></tr>
+<tr><td>Ahorro</td><td class="c">0,89</td><td class="c">—</td><td class="c">0,52</td><td class="c">0,60</td></tr>
+<tr><td>Plazo</td><td class="c">0,98</td><td class="c">—</td><td class="c">0,86</td><td class="c">0,875</td></tr>
+</tbody>
+<caption>Σβ̂ es el <b>traspaso acumulado</b> — el número que un ALCO pide. Los tres pasan holgadamente.</caption>
+</table>
+
+<div class="caja clave">
+<div class="titulo">El efecto colateral bueno</div>
+<p>Los controles #7 y #8 quedaron formando un par que es exactamente la tesis del Módulo 2:</p>
+<ul class="compacta">
+<li><b>#7 demuestra que el proceso generador SÍ es recuperable</b> con la especificación correcta.</li>
+<li><b>#8 demuestra que la especificación ingenua falla.</b></li>
+</ul>
+<p>Juntos dicen: el problema no está en los datos, está en el estimador. Que es precisamente lo que el Módulo 2 tiene que argumentar.</p>
+</div>
+
+<h2>24. El control #8: un control diseñado para avisar</h2>
+
+<p>El control #8 compara la beta estimada por OLS simple sobre <b>niveles</b> —<span class="v">d<sub>t</sub> = a + b·r<sub>t</sub></span>, que es lo que suele reportarse— contra el promedio ponderado de β⁺ y β⁻ por la frecuencia de subidas y bajadas de la muestra.</p>
+
+<div class="eq">
+β<sup>referencia</sup> = w<sup>+</sup> · β⁺ + (1 − w<sup>+</sup>) · β⁻&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">w<sup>+</sup> = fracción de meses con Δr &gt; 0</span>
+</div>
+
+<p><b>Es WARNING deliberadamente y se espera que roce el umbral.</b> Una regresión simétrica sobre un proceso asimétrico está mal especificada por definición: devuelve un promedio ponderado por la frecuencia de subidas y bajadas <i>de esta muestra concreta</i>, que <b>no es un parámetro estructural</b> y no sirve para proyectar otro ciclo con otra mezcla de movimientos.</p>
+
+<div class="caja">
+<div class="titulo">Un control que se espera que avise</div>
+<p>Es una idea de diseño que vale la pena aislar: <b>un test puede existir para documentar una limitación conocida, no para verificar una propiedad deseada</b>. Que dispare la alerta es información, no un defecto. Si algún día dejara de avisar, eso sí sería la señal de que algo cambió en el generador.</p>
+</div>
+
+<h2>25. Pre-registro de objetivos de calibración</h2>
+
+<p>Los seis objetivos de calibración se fijaron <b>antes de generar el primer dato</b>. La razón es directa: si se fijaran después, no serían criterios de aceptación sino descripciones del resultado, y no habría forma de distinguir un modelo bien calibrado de uno con la meta movida.</p>
+
+<table>
+<thead><tr><th>Métrica</th><th class="c">Objetivo</th><th class="c">Medido</th><th class="c">Estado</th></tr></thead>
+<tbody>
+<tr><td>Duración modificada de activos sensibles</td><td class="c">2,2 – 2,5 a</td><td class="c">2,15 a</td><td class="c neg">Fuera por 0,05</td></tr>
+<tr><td>Duración de pasivos (post-NMD, runoff)</td><td class="c">1,8 – 2,1 a</td><td class="c">1,84 a</td><td class="c pos">✓</td></tr>
+<tr><td>Gap de duración</td><td class="c">+0,4 – +0,6 a</td><td class="c">+0,49 a</td><td class="c pos">✓</td></tr>
+<tr><td>ΔEVE peor escenario / Tier 1</td><td class="c">−13% – −9%</td><td class="c">−21,9%</td><td class="c neg">Fuera</td></tr>
+<tr><td>ΔNII 12m ante +200 pb</td><td class="c">+1,5% – +3,5%</td><td class="c">+1,72%</td><td class="c pos">✓</td></tr>
+<tr><td>NIM</td><td class="c">2,8% – 3,6%</td><td class="c">3,33%</td><td class="c pos">✓</td></tr>
+</tbody>
+<caption>Cuatro de seis en rango. <b>Los dos incumplimientos se reportan como tales y no se movió la meta.</b></caption>
+</table>
+
+<h3>Por qué falla la duración de activos</h3>
+
+<p>Queda 0,05 años por debajo del rango, y la causa es identificable: con 32,4% de cartera comercial variable que repacta trimestralmente, 4% de efectivo overnight y 7,2% de tarjetas con repricing conductual de 3–6 meses, <b>el activo de este banco es estructuralmente corto</b>. El desvío es además sensible a la convención de añejamiento de las cohortes. Va al README como tal.</p>
+
+<h3>Por qué falla el ΔEVE — y por qué el fallo es correcto</h3>
+
+<p>Este caso es más interesante y se documenta completo en §64. En resumen: <b>el rango se pre-registró sobre la definición equivocada de núcleo</b>. Se fijó −9% a −13% suponiendo la duración de pasivo de runoff (núcleo de volumen); con la definición correcta —núcleo de repreciación, ajustado por beta— el diagnóstico da −21,9%.</p>
+
+<p>Mover la meta habría sido lo cómodo. No moverla es lo que hace que la pre-registración signifique algo.</p>
+
+<h2>Cómo correr el gate</h2>
+
+<pre>pip install -r requirements.txt
+python run_module0.py          # exit != 0 si falla algún ERROR; informe en data/
+python -m pytest tests/ -q     # 238 tests</pre>
+
+<!-- ==================== PARTE V ==================== -->
+<h1 id="parte5"><span class="num">Parte V</span>Módulo 1: la brecha de repreciación</h1>
+
+<p class="nota">Código: <code>src/balance.py</code>, informe en <code>data/gap_report.md</code>.</p>
+
+<h2>26. Teoría del análisis de brechas</h2>
+
+<p>El <b>análisis de brechas</b> (<i>gap analysis</i>) es la técnica más antigua de medición de riesgo de tasa y sigue siendo la primera tabla de cualquier informe de ALM. La idea es elemental: agrupar todos los activos y pasivos en bandas temporales según <b>cuándo repactan su tasa</b>, y calcular la diferencia banda a banda.</p>
+
+<div class="eq">
+GAP<sub>i</sub> = RSA<sub>i</sub> − RSL<sub>i</sub><br>
+<span class="cmt">RSA = rate-sensitive assets, RSL = rate-sensitive liabilities, en la banda i</span><br><br>
+ΔNII ≈ Σ<sub>i</sub> GAP<sub>i</sub> · Δr · ( T − t<sub>i</sub> )<br>
+<span class="cmt">T = horizonte (12 meses), t<sub>i</sub> = momento de repreciación de la banda</span>
+</div>
+
+<p>La lectura es directa: <b>gap positivo</b> en una banda significa que ahí repacta más activo que pasivo, luego una subida de tasas mejora el margen (<i>asset-sensitive</i>). <b>Gap negativo</b>, lo contrario (<i>liability-sensitive</i>).</p>
+
+<p>Los dos indicadores que un ALCO mira son el <b>gap acumulado a 12 meses sobre activos totales</b> —la porción del balance expuesta dentro del horizonte de presupuesto— y el <b>ratio RSA/RSL a 12 meses</b>.</p>
+
+<h2>27. Repreciación frente a vencimiento: dos ejes, dos riesgos</h2>
+
+<p>La distinción no es sutil y es la razón de ser del módulo. Sobre el mismo balance, los dos ejes producen tablas radicalmente distintas:</p>
+
+<table>
+<thead><tr><th style="width:26%">Cartera</th><th style="width:22%">Vence en…</th><th style="width:22%">Repacta en…</th><th>Qué mide cada eje</th></tr></thead>
+<tbody>
+<tr><td>Comercial (16.200 M)</td><td>3–7 años</td><td><b>Cada trimestre</b></td><td>Repreciación: exposición a tasa. Vencimiento: exposición a liquidez.</td></tr>
+<tr><td>Hipotecaria fija (9.000 M)</td><td>15–20 años</td><td>15–20 años</td><td>Coinciden: en tasa fija, repricing = vencimiento.</td></tr>
+<tr><td>Vista + ahorro (22.000 M)</td><td>Sin vencimiento</td><td>Contractualmente mañana</td><td>Ninguno de los dos ejes es correcto. Ese es el problema del Módulo 2.</td></tr>
+</tbody>
+</table>
+
+<p>Clasificar la cartera comercial por vencimiento haría ver <b>largo</b> un activo que es <b>corto</b>, y llevaría al comité a cubrir un riesgo que no tiene mientras deja abierto el que sí tiene. El gap de repreciación existe exactamente para no cometer ese error.</p>
+
+<div class="caja">
+<div class="titulo">Por qué el proyecto publica igualmente la tabla de vencimiento</div>
+<p>No como métrica, sino <b>como el error que el módulo existe para no cometer</b>. La diferencia entre las dos tablas se entiende mucho mejor vista que explicada: la cartera comercial aparece en 3–7 años en una y en 1–3 meses en la otra, y es el mismo dinero.</p>
+<p>Con una salvedad importante: la tabla de vencimiento <b>sí</b> es la relevante para <b>riesgo de liquidez</b>, que es otro problema y no el de este proyecto. Un mismo balance necesita las dos vistas para dos preguntas distintas.</p>
+</div>
+
+<h2>28. Las diecinueve bandas y sus puntos medios</h2>
+
+<p>El marco estandarizado de IRRBB define <b>19 bandas temporales</b> con sus puntos medios. El proyecto las implementa exactamente y añade un agrupamiento a 8 para presentación —nadie lleva 19 filas a un ALCO—.</p>
+
+<table>
+<thead><tr><th class="c">Banda</th><th class="c">Punto medio (a)</th><th class="c">Banda</th><th class="c">Punto medio (a)</th><th class="c">Banda</th><th class="c">Punto medio (a)</th></tr></thead>
+<tbody>
+<tr><td class="c">O/N</td><td class="c">0,0028</td><td class="c">1A–1,5A</td><td class="c">1,25</td><td class="c">6A–7A</td><td class="c">6,5</td></tr>
+<tr><td class="c">O/N–1M</td><td class="c">0,0417</td><td class="c">1,5A–2A</td><td class="c">1,75</td><td class="c">7A–8A</td><td class="c">7,5</td></tr>
+<tr><td class="c">1M–3M</td><td class="c">0,1667</td><td class="c">2A–3A</td><td class="c">2,5</td><td class="c">8A–9A</td><td class="c">8,5</td></tr>
+<tr><td class="c">3M–6M</td><td class="c">0,3750</td><td class="c">3A–4A</td><td class="c">3,5</td><td class="c">9A–10A</td><td class="c">9,5</td></tr>
+<tr><td class="c">6M–9M</td><td class="c">0,6250</td><td class="c">4A–5A</td><td class="c">4,5</td><td class="c">10A–15A</td><td class="c">12,5</td></tr>
+<tr><td class="c">9M–1A</td><td class="c">0,8750</td><td class="c">5A–6A</td><td class="c">5,5</td><td class="c">15A–20A</td><td class="c">17,5</td></tr>
+<tr><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c">&gt;20A</td><td class="c">25,0</td></tr>
+</tbody>
+</table>
+
+<div class="caja clave">
+<div class="titulo">El punto medio no es decorativo</div>
+<p>Es <b>el plazo al que el marco estandarizado descuenta el flujo asignado a cada banda</b>. Se define en el Módulo 1 —junto con los límites— aunque no se use hasta el Módulo 4, precisamente para que nadie los reinvente después con otros números y las dos métricas describan balances distintos.</p>
+</div>
+
+<h3>Dos notas honestas sobre las bandas</h3>
+
+<ul>
+<li><b>Con datos mensuales la banda overnight queda vacía.</b> Los NMD son overnight de verdad —el cliente retira mañana— pero el generador trabaja a fin de mes y los agrupa en O/N–1M. No cambia ninguna conclusión y va dicho en el informe.</li>
+<li><b>El punto medio de overnight es aritméticamente inconsistente con su propia banda.</b> Basilea da 0,0028 años, que es 1/365 redondeado. Bajo base 30/360 eso son 0,0336 meses, tres diezmilésimas de mes <i>por encima</i> del tope de su banda (1/30 = 0,0333). Se conserva el número regulatorio en lugar de «arreglarlo», con una tolerancia de un día documentada: el punto medio es el plazo al que el marco descuenta, y ahí manda el texto normativo, no la aritmética.</li>
+</ul>
+
+<p>Los intervalos son <b>abiertos por abajo y cerrados por arriba</b>: un plazo de 3,0 meses cae en 1M–3M, no en 3M–6M. La única excepción es overnight, cerrada por ambos lados para que el plazo cero tenga dónde caer.</p>
+
+<h2>29. Reparto amortizado frente a bullet</h2>
+
+<p>La decisión de diseño más consecuente del módulo: <b>cómo se reparte el saldo de un instrumento amortizable entre bandas</b>.</p>
+
+<div class="eq">
+<b>Bullet (ingenuo):</b> todo el saldo → banda del horizonte de repreciación<br><br>
+<b>Amortizado:</b><br>
+&nbsp;&nbsp;principal devuelto en t &lt; horizonte&nbsp;&nbsp;→&nbsp;&nbsp;banda de t<br>
+&nbsp;&nbsp;saldo remanente en el horizonte&nbsp;&nbsp;→&nbsp;&nbsp;banda del horizonte
+</div>
+
+<p>Una hipoteca francesa a 20 años <b>no expone su saldo íntegro dentro de 20 años</b>. Asignarla entera a la banda 15A–20A sobrestima el plazo del activo de forma grosera.</p>
+
+<table>
+<thead><tr><th>Método</th><th class="c">Gap acumulado 12m</th><th class="c">Sobre activos</th></tr></thead>
+<tbody>
+<tr><td>Amortizado (usado)</td><td class="c">−10.280 M</td><td class="c">−20,6%</td></tr>
+<tr><td>Bullet (contraste)</td><td class="c">−13.192 M</td><td class="c">−26,4%</td></tr>
+</tbody>
+<caption>Con 16.200 M de cartera amortizable (hipotecario, consumo, vehículos) la diferencia es material. El informe publica ambos.</caption>
+</table>
+
+<h3>Otras dos decisiones del módulo</h3>
+
+<ul>
+<li><b>No sensibles y patrimonio quedan fuera de las bandas.</b> No repactan nunca; asignarles una banda sería inventar exposición. Aparecen en la tabla de reconciliación.</li>
+<li><b>Reconciliación obligatoria</b> de los 50.000 M contables a RSA/RSL. Un informe de gap que no cuadra con el balance es un informe que nadie audita.</li>
+</ul>
+
+<h3>Los umbrales de política</h3>
+
+<p>El módulo compara el gap contra umbrales de <b>apetito de riesgo interno</b> (aviso 10%, alerta 20% de los activos; banda RSA/RSL 0,85–1,15). <b>No son regulatorios.</b> El único umbral que Basilea fija es el del <i>outlier test</i> de EVE. Se incluyen porque un informe de gap sin umbral es un número sin decisión asociada, y lo que un ALCO hace es decidir.</p>
+
+<h2>30. Los tres supuestos falsos que todo gap hace</h2>
+
+<p>El análisis de brechas es una aproximación de primer orden y descansa en tres supuestos que, en un banco real, son todos falsos. Conviene enunciarlos explícitamente porque cada uno explica un límite distinto de la técnica:</p>
+
+<table>
+<thead><tr><th style="width:6%" class="c">#</th><th style="width:34%">Supuesto</th><th>Por qué es falso y qué lo corrige</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>1</b></td><td><b>Traspaso del 100% dentro de la banda.</b> Cada peso que repacta en una banda traslada el choque completo.</td><td>Falso para los depósitos: la beta de vista es 0,25. <b>El Módulo 2 corrige la proporción que repacta, pero NO puede corregir esto</b> — dentro de la banda el traspaso se sigue suponiendo completo. Solo la proyección del Módulo 3 lo resuelve.</td></tr>
+<tr><td class="c"><b>2</b></td><td><b>Todo repacta en un instante.</b> Cada posición se asigna a una banda y se supone que repacta ahí.</td><td>Falso: el traspaso tiene un perfil temporal (§49). Es el mismo problema que hacía inalcanzable el control #7.</td></tr>
+<tr><td class="c"><b>3</b></td><td><b>Los flujos no dependen de la tasa.</b> El calendario de repreciación es exógeno al escenario.</td><td>Falso con opcionalidad: un hipotecado prepaga cuando las tasas bajan. Fuera de alcance en este proyecto y declarado como tal.</td></tr>
+</tbody>
+</table>
+
+<h2>31. El hallazgo: el gap contradice al margen</h2>
+
+<table>
+<thead><tr><th style="width:50%">Indicador</th><th class="c">Valor</th></tr></thead>
+<tbody>
+<tr><td>Gap contractual acumulado a 12 meses</td><td class="c"><b>−10.280 M = −20,6% de los activos</b></td></tr>
+<tr><td>Estado vs. política interna</td><td class="c neg"><b>ALERTA</b> (umbral 20%)</td></tr>
+<tr><td>RSA/RSL a 12 meses</td><td class="c">0,72</td></tr>
+<tr><td>Lo que eso <i>predice</i></td><td class="c">El margen <b>cae</b> cuando suben las tasas</td></tr>
+<tr><td>Lo que el diagnóstico del Módulo 0 <i>mide</i></td><td class="c pos"><b>ΔNII +1,72%</b> ante +200 pb</td></tr>
+</tbody>
+</table>
+
+<div class="caja critica">
+<div class="titulo">Los dos números son correctos. El mal especificado es el gap.</div>
+<p>La causa está en <b>una sola línea del tratamiento</b>: vista y ahorro —22.000 M, el 44% del fondeo— entran en la banda más corta porque contractualmente el cliente retira mañana. Eso equivale a suponer que el banco traslada el <b>100%</b> de cualquier movimiento de tasas a esos depósitos.</p>
+<p>La beta verdadera de vista es 0,25. <b>El gap contractual está midiendo un banco que no existe.</b></p>
+</div>
+
+<p>Esta es, históricamente, la razón por la que la industria dejó de usar el análisis de brechas como herramienta única y pasó a simulación completa del margen. El hallazgo está bajo test (<code>test_el_gap_contradice_al_margen_financiero</code>), lo que significa que si alguien «arreglara» el gap sin arreglar la causa, el test fallaría.</p>
+
+<div class="caja">
+<div class="titulo">Decisión de diseño: ninguna beta en el Módulo 1</div>
+<p>El Módulo 1 <b>no aplica ninguna beta ni supuesto conductual</b>, aunque el problema sea evidente desde el primer momento. Es deliberado: la beta es producto del Módulo 2, y usarla antes de estimarla sería importar el resultado al módulo anterior y dejar al Módulo 2 sin nada que demostrar.</p>
+<p>Lo que el Módulo 1 entrega es la vista contractual <b>y el diagnóstico de por qué no basta</b>. Esa es su contribución.</p>
+</div>
+
+<p>El problema es <b>doble</b>, y el Módulo 2 debe arreglar las dos mitades: la <b>cuantía</b> del traspaso (la beta) y el <b>momento</b> en que ocurre (el plazo conductual del núcleo). Corregir solo la primera dejaría el EVE del Módulo 4 igual de mal.</p>
+
+<!-- ==================== PARTE VI ==================== -->
+<h1 id="parte6"><span class="num">Parte VI</span>Módulo 2: el modelo conductual de depósitos</h1>
+
+<p class="nota">Código: <code>src/deposits.py</code>, informe en <code>data/nmd_report.md</code>. Es el corazón conceptual del proyecto.</p>
+
+<h2>32. El depósito sin vencimiento y sus tres plazos distintos</h2>
+
+<p>Un <b>depósito sin vencimiento</b> (<i>non-maturity deposit</i>, NMD) es un pasivo cuyo contrato no dice cuándo hay que devolverlo: cuenta corriente, cuenta de ahorro. En este banco son <b>22.000 M, el 44% del fondeo</b>. Casi la mitad del pasivo no tiene vencimiento contractual, de modo que su tratamiento en cualquier métrica de riesgo de tasa depende de un <b>supuesto de comportamiento</b> y no de un contrato.</p>
+
+<p>El error que este módulo existe para no cometer es confundir <b>tres objetos distintos</b> que la conversación cotidiana llama todos «core»:</p>
+
+<table>
+<thead><tr><th style="width:24%">Concepto</th><th style="width:32%">Pregunta que responde</th><th>Cómo se obtiene · valor en vista</th></tr></thead>
+<tbody>
+<tr><td><b>Proporción estable</b><br><span class="nota">núcleo de volumen</span></td><td>¿Qué parte del saldo <b>no se va</b>?</td><td>Estimada de la serie destendenciada. <b>0,897</b></td></tr>
+<tr><td><b>Núcleo regulatorio</b><br><span class="nota">núcleo de repreciación</span></td><td>¿Qué parte <b>no repacta</b> ante un choque?</td><td>estable × (1 − β⁺), luego topes. <b>0,651</b></td></tr>
+<tr><td><b>Composición del generador</b><br><span class="nota">core_share</span></td><td>¿Qué parte del saldo es núcleo <b>por construcción</b>?</td><td>Parámetro verdadero. <b>0,85</b></td></tr>
+</tbody>
+</table>
+
+<p>Y tres <b>plazos</b> igualmente distintos, que el módulo reporta juntos precisamente para que no se confundan:</p>
+
+<table>
+<thead><tr><th style="width:26%">Plazo</th><th style="width:36%">Pregunta que responde</th><th class="c">Vista</th></tr></thead>
+<tbody>
+<tr><td><b>Vida de volumen</b></td><td>¿Cuánto tarda en irse el dinero?</td><td class="c">4,0 a supuesto (4,2 real)</td></tr>
+<tr><td><b>Plazo de réplica</b></td><td>¿Cuánto tarda en repactar el <b>precio</b>?</td><td class="c">0,37 a estimado</td></tr>
+<tr><td><b>Plazo IRRBB del núcleo</b></td><td>¿Qué asigno a bandas para calcular EVE?</td><td class="c">4,0 a (tope 5,0)</td></tr>
+</tbody>
+</table>
+
+<div class="caja clave">
+<div class="titulo">La nota conceptual que sostiene todo el módulo</div>
+<p><b>Un depósito puede ser perfectamente estable en saldo y aun así repactar entero.</b></p>
+<p>Imagínese una cuenta de ahorro cuyo saldo lleva diez años sin moverse pero cuya tasa sigue al mercado con beta 1. Es estable en volumen y aporta <b>cero</b> al descalce: repacta como si fuera fondeo overnight. Contarla como núcleo le atribuye un plazo largo que no tiene.</p>
+<p>Esa es la diferencia entre el núcleo de volumen y el núcleo de repreciación, y en el Módulo 4 se verá cuánto cuesta confundirlos: <b>casi seis puntos de Tier 1, la diferencia entre pasar el outlier test y no pasarlo</b>.</p>
+</div>
+
+<h2>33. Beta asimétrica: especificación y estimador</h2>
+
+<p>El estimador es una regresión de rezagos distribuidos con la parte positiva y negativa de Δr separadas:</p>
+
+<div class="eq">
+Δd<sub>t</sub> = a<sub>0</sub> + Σ<sub>k=0..L</sub> a<sub>k</sub> · Δr<sup>+</sup><sub>t−k</sub> + Σ<sub>k=0..L</sub> b<sub>k</sub> · Δr<sup>−</sup><sub>t−k</sub> + ε<sub>t</sub><br><br>
+Δr<sup>+</sup><sub>t</sub> = máx(Δr<sub>t</sub>, 0)&nbsp;&nbsp;&nbsp;&nbsp;Δr<sup>−</sup><sub>t</sub> = mín(Δr<sub>t</sub>, 0)<br><br>
+β̂⁺ = Σ<sub>k</sub> a<sub>k</sub>&nbsp;&nbsp;&nbsp;&nbsp;β̂⁻ = Σ<sub>k</sub> b<sub>k</sub>&nbsp;&nbsp;&nbsp;&nbsp;L = 12
+</div>
+
+<h3>Por qué separar Δr en su parte positiva y negativa</h3>
+
+<p><b>Es lo único que hace visible la asimetría.</b> Una regresión sobre Δr a secas devuelve un promedio ponderado por la frecuencia de subidas y bajadas <i>de esta muestra concreta</i>. Ese número no es un parámetro estructural: si el próximo ciclo tiene una mezcla distinta de subidas y bajadas, la beta «estimada» ya no aplica. Es exactamente lo que el control #8 del Módulo 0 señala a propósito.</p>
+
+<p>La descomposición <span class="v">Δr = Δr⁺ + Δr⁻</span> es exacta y permite que el mismo modelo lineal estime dos regímenes a la vez, sin necesidad de un modelo de cambio de régimen ni de partir la muestra —que reduciría los grados de libertad justo cuando hacen falta—.</p>
+
+<h3>Por qué doce rezagos</h3>
+
+<p>Por lo derivado en §23: con ajuste parcial la respuesta se reparte geométricamente en el tiempo con factor (1−λ). Con λ = 0,30 en vista, solo un tercio del traspaso ocurre en el mes del movimiento. Un estimador contemporáneo recogería ese tercio y llamaría beta a un número tres veces menor que el verdadero. Doce rezagos capturan (1−0,30)<sup>12</sup> ≈ 1,4% de cola residual: suficiente.</p>
+
+<h3>Resultados</h3>
+
+<table>
+<thead><tr><th>Producto</th><th class="c">β̂⁺</th><th class="c">real</th><th class="c">error</th><th class="c">β̂⁻</th><th class="c">real</th><th class="c">error</th><th class="c">R²</th></tr></thead>
+<tbody>
+<tr><td>Vista</td><td class="c">0,275</td><td class="c">0,25</td><td class="c">+0,025</td><td class="c">0,505</td><td class="c">0,55</td><td class="c">−0,045</td><td class="c">0,81</td></tr>
+<tr><td>Ahorro</td><td class="c">0,466</td><td class="c">0,45</td><td class="c">+0,016</td><td class="c">0,744</td><td class="c">0,75</td><td class="c">−0,006</td><td class="c">0,94</td></tr>
+<tr><td>Plazo</td><td class="c">0,848</td><td class="c">0,85</td><td class="c">−0,002</td><td class="c">0,938</td><td class="c">0,90</td><td class="c">+0,038</td><td class="c">0,98</td></tr>
+</tbody>
+<caption>La asimetría se recupera en los tres productos, y el estimador la ve <b>sin que se le haya dicho que existe</b>.</caption>
+</table>
+
+<p>El módulo publica además, como contraste, la beta OLS ingenua sobre niveles. Queda entre las dos betas verdaderas sin ser ninguna: no es imprecisión, es un promedio muestral que no sirve para proyectar otro ciclo.</p>
+
+<h3>Un subproducto que resulta ser clave</h3>
+
+<p>El estimador guarda los <b>coeficientes individuales</b> <span class="v">a<sub>k</sub></span> y <span class="v">b<sub>k</sub></span>, no solo sus sumas. Esos coeficientes <b>son</b> el perfil mensual con que el traspaso se materializa, y el Módulo 3 los usa para no suponer que la beta entera llega el primer mes (§49). Es un caso en el que un detalle de implementación del Módulo 2 resulta ser un insumo económico del Módulo 3.</p>
+
+<h2>34. Inferencia sobre una suma de coeficientes</h2>
+
+<p>La hipótesis de interés no es «¿es significativo el coeficiente contemporáneo?» sino «¿es significativo el <b>traspaso acumulado</b>?». Eso es un contraste sobre una combinación lineal de coeficientes, y su varianza se obtiene de la matriz de covarianzas completa:</p>
+
+<div class="eq">
+Sea c el vector con 1 en las posiciones a sumar y 0 en el resto.<br><br>
+suma = c′β̂&nbsp;&nbsp;&nbsp;&nbsp; Var(c′β̂) = c′ · Var(β̂) · c&nbsp;&nbsp;&nbsp;&nbsp; t = c′β̂ / √(c′ Var(β̂) c)<br><br>
+Var(β̂) = s² (X′X)<sup>−1</sup>,&nbsp;&nbsp; s² = ε̂′ε̂ / (n − k)
+</div>
+
+<p>Usar la suma de los errores estándar individuales en lugar de esta fórmula sería <b>incorrecto y groseramente conservador</b>: ignora las covarianzas entre coeficientes de rezagos vecinos, que en una regresión de rezagos distribuidos son fuertemente negativas (multicolinealidad entre Δr<sub>t−k</sub> y Δr<sub>t−k−1</sub>). Ese es el mecanismo por el que un modelo de rezagos puede tener todos los coeficientes individualmente insignificantes y una suma altamente significativa.</p>
+
+<h2>35. Proporción estable: destendencia y práctica supervisora</h2>
+
+<p>La <b>proporción estable</b> es la porción del saldo que no se va ni en el peor momento observado. El procedimiento tiene dos pasos y el primero es indispensable:</p>
+
+<div class="eq">
+1. Destendenciar: &nbsp;log B<sub>t</sub> = a + g·t + u<sub>t</sub>&nbsp;&nbsp;⟹&nbsp;&nbsp;tendencia<sub>t</sub> = e<sup>a+g·t</sup><br>
+2. Ratio: &nbsp;ρ<sub>t</sub> = B<sub>t</sub> / tendencia<sub>t</sub><br>
+3. Estimador: &nbsp;estable = mín<sub>t</sub> ρ<sub>t</sub>
+</div>
+
+<div class="caja">
+<div class="titulo">Por qué destendenciar es obligatorio</div>
+<p>El saldo de este banco crece un 4,5% anual. Medir la estabilidad sobre el nivel bruto diría que el depósito es <b>perfectamente estable</b> —nunca baja del nivel inicial— y devolvería una proporción estable de 1,00. El crecimiento enmascara por completo la volatilidad.</p>
+<p>Quitar la tendencia log-lineal y medir la caída relativa <i>contra ella</i> es la práctica supervisora habitual, y es lo que hace que el episodio de estrés del mes 96 sea lo que fija el mínimo — que es exactamente lo que debe fijarlo.</p>
+</div>
+
+<p>Se reportan dos lecturas: el <b>mínimo</b> (práctica supervisora, sensible al peor episodio) y un <b>percentil bajo</b> (menos sensible a un único evento, útil como contraste de robustez cuando se discute si el estrés observado es representativo).</p>
+
+<table>
+<thead><tr><th>Producto</th><th class="c">Estable estimada</th><th class="c">core_share verdadero</th><th class="c">Diferencia</th></tr></thead>
+<tbody>
+<tr><td>Vista</td><td class="c">0,897</td><td class="c">0,85</td><td class="c">+0,047</td></tr>
+<tr><td>Ahorro</td><td class="c">0,913</td><td class="c">0,90</td><td class="c">+0,013</td></tr>
+</tbody>
+</table>
+
+<p><b>La sobreestimación no es ruido.</b> El estimador mide <i>lo que no se va en volumen</i>; el parámetro del generador describe <i>composición</i>. Son objetos distintos, y el hecho de que difieran de forma sistemática y en la dirección esperada es evidencia de que el módulo está midiendo lo que dice medir.</p>
+
+<h2>36. Portafolio de réplica y mínimos cuadrados no negativos</h2>
+
+<p>El <b>portafolio de réplica</b> (<i>replicating portfolio</i>) es una técnica estándar de mesa: buscar la escalera de tramos de mercado cuyo rendimiento sigue mejor la tasa que el banco paga.</p>
+
+<div class="eq">
+d<sub>t</sub> ≈ α + Σ<sub>j</sub> w<sub>j</sub> · m<sub>j</sub>(t)&nbsp;&nbsp;&nbsp;&nbsp;sujeto a&nbsp;&nbsp;w<sub>j</sub> ≥ 0<br><br>
+<span class="cmt">m<sub>j</sub>(t) = media móvil de r sobre j meses = rendimiento de una escalera a j meses renovada continuamente</span><br><br>
+traspaso de largo plazo = Σ<sub>j</sub> w<sub>j</sub>&nbsp;&nbsp;&nbsp;&nbsp;plazo medio = Σ<sub>j</sub> w<sub>j</sub>·(j/2) / Σ<sub>j</sub> w<sub>j</sub>
+</div>
+
+<p>La restricción <span class="v">w<sub>j</sub> ≥ 0</span> no es cosmética: un peso negativo significaría <b>vender en corto</b> ese tramo, que no es una estrategia de fondeo implementable para una tesorería bancaria. Por eso se resuelve con <b>NNLS</b> (<i>non-negative least squares</i>, algoritmo de Lawson-Hanson) en lugar de OLS. Sin la restricción, la multicolinealidad entre medias móviles de plazos vecinos produce pesos enormes de signos alternados que ajustan bien y no significan nada.</p>
+
+<div class="caja">
+<div class="titulo">Publicado como contraste, nunca como insumo</div>
+<p>El plazo de réplica de vista sale en <b>0,37 años</b> —unos cuatro meses— frente a una vida de volumen de años. La diferencia no es un error de ninguno de los dos: <b>el precio de un depósito repacta en meses aunque el saldo permanezca lustros</b>. Son dos preguntas distintas.</p>
+<p>Usar el plazo de réplica para asignar bandas de EVE <b>mandaría los 22.000 M a la banda corta y dejaría el gap tan mal especificado como en el Módulo 1</b>. Por eso se calcula, se publica y no se usa. Que aparezca en el informe con su etiqueta correcta es parte del entregable: un lector que confunda ambos plazos toma decisiones muy distintas.</p>
+</div>
+
+<h2>37. No identificabilidad de la vida del núcleo</h2>
+
+<p>Este es el hallazgo metodológico del proyecto.</p>
+
+<h3>El experimento</h3>
+
+<p>Se genera el banco varias veces cambiando <b>únicamente</b> la vida promedio verdadera del núcleo de vista, con todo lo demás idéntico —misma semilla, mismo consumo de números aleatorios— y se comparan las series de saldo <b>observables</b>.</p>
+
+<table>
+<thead><tr><th class="c">Vida verdadera</th><th class="c">Correlación vs. base (4,2 a)</th><th class="c">Diferencia relativa máxima</th></tr></thead>
+<tbody>
+<tr><td class="c">3,0 a</td><td class="c">0,999994</td><td class="c">0,11%</td></tr>
+<tr><td class="c">6,0 a</td><td class="c">0,999997</td><td class="c">0,09%</td></tr>
+<tr><td class="c">10,0 a</td><td class="c">0,999987</td><td class="c">0,17%</td></tr>
+</tbody>
+<caption>Una vida de 3 años y una de 10 producen la misma serie observable.</caption>
+</table>
+
+<div class="caja critica">
+<div class="titulo">No es identificación débil: es información cero</div>
+<p>Una diferencia máxima del 0,17% en una serie con volatilidad mensual del 1,2% significa que la señal está <b>un orden de magnitud por debajo del ruido</b>. Ninguna cantidad de datos adicionales resolvería esto: no es un problema de precisión, es un problema de <b>identificación estructural</b>.</p>
+</div>
+
+<h3>Por qué ocurre — la derivación</h3>
+
+<p>El proceso del núcleo es:</p>
+
+<div class="eq">
+C<sub>t</sub> = ϱ · C<sub>t−1</sub> + N<sub>t</sub>,&nbsp;&nbsp;&nbsp;&nbsp;ϱ = e<sup>−λ/12</sup>
+</div>
+
+<p>Se observa <span class="v">C<sub>t</sub></span>. Hay <b>dos incógnitas</b> por período —el factor de runoff ϱ y la originación <span class="v">N<sub>t</sub></span>— y <b>una sola ecuación</b>. Para cualquier ϱ que se proponga, existe una senda de originación <span class="v">N<sub>t</sub> = C<sub>t</sub> − ϱ·C<sub>t−1</sub></span> que reproduce la serie observada exactamente.</p>
+
+<p>En este generador la originación se calibra para que la tendencia neta sea +4,5% anual sea cual sea λ. Por tanto cualquier λ produce la misma tendencia y casi la misma serie. <b>El saldo agregado es la suma de un stock que se va y otro que entra, y no permite separar los dos flujos.</b></p>
+
+<p>Dicho en términos de negocio: un banco cuyos depósitos rotan rápido con originación alta produce <b>exactamente el mismo saldo</b> que uno cuyos depósitos son pegajosos con originación baja. Distinguirlos exige <b>datos de antigüedad de cuenta</b> —cuánto lleva abierta cada cuenta y cuánto saldo tiene—, que el <i>core</i> bancario guarda pero que el equipo de ALM a menudo no tiene a mano en formato utilizable.</p>
+
+<div class="caja clave">
+<div class="titulo">Esto corrige un razonamiento anterior del propio proyecto</div>
+<p>El Módulo 0 argumentó que la construcción runoff + originación hacía λ <b>recuperable</b>. La hace <b>estructural</b>, no <b>identificable desde el agregado</b>. Son cosas distintas y la diferencia importa: el parámetro sí está en el proceso generador —el stock efectivamente se va a esa velocidad— pero no deja huella en la única serie que el banco observa.</p>
+<p>El proyecto conserva ambos razonamientos, el original y la corrección, precisamente porque un lector externo tiene que poder distinguir qué se planeó de qué se aprendió.</p>
+</div>
+
+<h3>Por qué esto explica los topes regulatorios</h3>
+
+<p>Aquí el hallazgo técnico se convierte en un argumento de política. IRRBB <b>acota</b> el plazo del núcleo en vez de pedir una estimación mejor, y ahora se ve por qué es la respuesta correcta:</p>
+
+<ol>
+<li>Es un parámetro que <b>el banco no puede falsar</b> con los datos que suele tener.</li>
+<li>Empuja el EVE <b>en la dirección que al banco le conviene</b>: un núcleo más largo abarata el descalce en el papel.</li>
+</ol>
+
+<p>Un parámetro no verificable con incentivo unidireccional es exactamente el caso en el que un supervisor no debe pedir «mejor estimación» sino <b>acotar el rango</b>. Los topes no son conservadurismo arbitrario: son la respuesta institucional correcta a un problema de identificación.</p>
+
+<h2>38. El núcleo regulatorio y sus topes</h2>
+
+<p>La cadena del marco estandarizado, aplicada tal cual:</p>
+
+<div class="eq">
+estable = proporción que no se va en volumen&nbsp;&nbsp;<span class="cmt">estimada, §35</span><br>
+núcleo = estable × (1 − β⁺)&nbsp;&nbsp;<span class="cmt">la parte que no repacta</span><br>
+núcleo ← mín( núcleo, tope de proporción )<br>
+vida ← mín( vida supuesta, tope de plazo medio )
+</div>
+
+<table>
+<thead><tr><th>Categoría de cliente</th><th class="c">Tope de proporción núcleo</th><th class="c">Tope de plazo medio</th></tr></thead>
+<tbody>
+<tr><td>Minorista transaccional (vista)</td><td class="c">90%</td><td class="c">5,0 a</td></tr>
+<tr><td>Minorista no transaccional (ahorro)</td><td class="c">70%</td><td class="c">4,5 a</td></tr>
+<tr><td>Mayorista</td><td class="c">50%</td><td class="c">4,0 a</td></tr>
+</tbody>
+</table>
+
+<p>La lógica de las categorías es económica: <b>vista</b> es transaccional —nómina, pagos, domiciliaciones—, el cliente lo tiene por servicio y no por precio, y por eso su beta es baja y su tope generoso. <b>Ahorro</b> es el mismo cliente pero con saldo que sí compara precio. <b>Mayorista</b> es una tesorería corporativa que mueve el dinero por 5 pb.</p>
+
+<table>
+<thead><tr><th>Producto</th><th class="c">Estable</th><th class="c">β⁺</th><th class="c">Núcleo bruto</th><th class="c">Tope</th><th class="c">Núcleo aplicado</th><th class="c">¿Muerde?</th></tr></thead>
+<tbody>
+<tr><td>Vista</td><td class="c">0,897</td><td class="c">0,275</td><td class="c">0,651</td><td class="c">0,90</td><td class="c">0,651</td><td class="c">no</td></tr>
+<tr><td>Ahorro</td><td class="c">0,913</td><td class="c">0,466</td><td class="c">0,488</td><td class="c">0,70</td><td class="c">0,488</td><td class="c">no</td></tr>
+</tbody>
+<caption>El paso × (1 − β) es la nota conceptual de §32 hecha operación aritmética.</caption>
+</table>
+
+<h3>Dos decisiones de supuesto que merecen registrarse</h3>
+
+<ul>
+<li><b>La vida supuesta no sale del ground truth.</b> Se fija en 4,0 y 3,5 años —números redondos que un comité elegiría a partir de <i>benchmarks</i> de industria— contra los 4,2 y 3,0 reales. <b>Copiar el valor verdadero fabricaría un acierto</b> y vaciaría de contenido el ejercicio: el error contra el ground truth es precisamente lo que el módulo debe reportar.</li>
+<li><b>Se usa β⁺ y no β̄ para el corte.</b> El escenario que preocupa para el EVE es el de tasas al alza, y ahí el traspaso relevante es el de subida. La elección no es neutra —usar β̄ lleva el gap de −1,3% a −5,2%— y por eso el barrido de sensibilidad la trata como un eje propio. <b>Elegir la beta del corte no es un detalle técnico.</b></li>
+</ul>
+
+<h2>39. Reasignación a bandas por decaimiento exponencial</h2>
+
+<p>El <b>no núcleo</b> va entero a la banda más corta: es la parte que repacta de inmediato. El <b>núcleo</b> corre off exponencialmente con λ = 1/vida:</p>
+
+<div class="eq">
+fracción que vence en la banda [a, b] (en años) = e<sup>−λa</sup> − e<sup>−λb</sup><br><br>
+<span class="cmt">plazo medio de esa distribución = ∫ t·λe<sup>−λt</sup> dt = 1/λ = vida asumida ✓</span>
+</div>
+
+<div class="caja">
+<div class="titulo">Por qué exponencial y no reparto uniforme</div>
+<p>Dos razones. Primera: <b>es la forma funcional del propio proceso de runoff</b>, así que el perfil de bandas y el generador dicen lo mismo. Segunda, y más práctica: <b>su plazo medio es 1/λ, inmediato de leer y de comparar contra el tope regulatorio</b>.</p>
+<p>Con reparto uniforme sobre [0, T] el plazo medio es T/2, y entonces la mitad del equipo acaba discutiendo si el tope de 5 años aplica a T o a T/2. Elegir una forma funcional cuyo parámetro <i>es</i> la magnitud que el regulador acota elimina una clase entera de malentendidos.</p>
+</div>
+
+<p>La implementación sustituye las dos cohortes NMD por un tramo por banda, con la forma exacta que consume <code>src/balance.py</code>. Eso significa que <b>el gap conductual se obtiene con la misma función que produjo el contractual</b>. No es comodidad: es lo que garantiza que la diferencia entre ambas vistas venga del supuesto de comportamiento y no de dos implementaciones que divergieron.</p>
+
+<h3>El gap corregido</h3>
+
+<table>
+<thead><tr><th>Tratamiento de los NMD</th><th class="c">Gap acum. 12m</th><th class="c">Sobre activos</th><th class="c">Estado</th></tr></thead>
+<tbody>
+<tr><td>Contractual (Módulo 1)</td><td class="c">−10.280 M</td><td class="c">−20,6%</td><td class="c neg"><b>ALERTA</b></td></tr>
+<tr><td>Conductual (Módulo 2)</td><td class="c">−675 M</td><td class="c">−1,3%</td><td class="c pos"><b>DENTRO DE POLÍTICA</b></td></tr>
+</tbody>
+</table>
+
+<p>De un descalce que exigiría plan de acción a un banco esencialmente calzado. <b>Lo que cambió no fue el balance</b>: fue reconocer que de una subida de 100 pb el banco traslada del orden de 27 pb a las cuentas transaccionales, no 100.</p>
+
+<div class="caja critica">
+<div class="titulo">Sin sobreafirmar el resultado</div>
+<p>El gap conductual sigue <b>levemente negativo</b> (−1,3%) mientras el margen mejora (+1,72%). Un gap cercano a cero es <i>compatible</i> con eso, pero <b>no lo predice</b>, y la razón es estructural: <b>cualquier</b> análisis de brechas trata cada peso que repacta dentro de su banda como si trasladara el 100% del choque (supuesto falso #1 de §30).</p>
+<p>El modelo conductual arregla el <i>momento</i> del repricing y la <i>proporción</i> que repacta; no puede arreglar que, una vez dentro de la banda, el traspaso se suponga completo.</p>
+<p>Es decir: <b>el gap pasó de estar mal especificado a estar bien especificado y aun así seguir siendo una aproximación de primer orden.</b> Determinar el signo y la magnitud del margen requiere proyectarlo — Módulo 3. Está bajo test (<code>test_el_gap_conductual_sigue_sin_predecir_el_signo_del_margen</code>).</p>
+</div>
+
+<h2>40. La sensibilidad como entregable, no como apéndice</h2>
+
+<div class="caja clave">
+<div class="titulo">Consecuencia de método</div>
+<p><b>Cuando un parámetro no está identificado, el entregable honesto no es un número puntual sino el rango que produce.</b> Reportar «el gap a 12 meses es −1,3%» afirma más de lo que los datos permiten saber. El análisis de sensibilidad deja de ser un adorno y pasa a ser el resultado principal.</p>
+</div>
+
+<table>
+<thead><tr><th class="c">Vida supuesta</th><th class="c">Vista aplicada</th><th class="c">¿Tope muerde?</th><th class="c">Gap 12m / activos</th></tr></thead>
+<tbody>
+<tr><td class="c">2,0 a</td><td class="c">2,0 a</td><td class="c">no</td><td class="c">−5,4%</td></tr>
+<tr><td class="c">3,0 a</td><td class="c">3,0 a</td><td class="c">no</td><td class="c">−2,6%</td></tr>
+<tr><td class="c">4,0 a</td><td class="c">4,0 a</td><td class="c">no</td><td class="c">−1,1%</td></tr>
+<tr><td class="c">5,0 a</td><td class="c">5,0 a</td><td class="c">sí (ahorro)</td><td class="c">−0,2%</td></tr>
+<tr><td class="c">7,0 a</td><td class="c"><b>5,0 a</b></td><td class="c">sí</td><td class="c"><b>−0,2%</b></td></tr>
+</tbody>
+<caption>El rango honesto del gap a 12 meses es <b>−5,4% a −0,2%</b>.</caption>
+</table>
+
+<p><b>La última fila es el exhibit.</b> A partir de 5 años el resultado se congela, porque el tope impide seguir estirando el supuesto. Ahí se ve exactamente qué compra la regulación: sin el tope, un banco podría estirar su supuesto de vida hasta hacer desaparecer el descalce en el papel. Con él, el mejor caso alcanzable está acotado.</p>
+
+<p>Los otros dos ejes del barrido: la proporción estable ±10 pp mueve el gap entre −3,5% y +0,7%; usar β̄ en lugar de β⁺ para el corte lo lleva de −1,3% a −5,2%.</p>
+
+<h3>Qué hereda el resto del proyecto</h3>
+
+<ul>
+<li>El <b>Módulo 3</b> usa β̂⁺ y β̂⁻ para proyectar el costo de fondeo, y los coeficientes de rezago como perfil temporal, en lugar de inferir el signo del margen de una brecha.</li>
+<li>El <b>Módulo 4</b> usa el perfil de bandas del núcleo para descontar los NMD, y debe reportar el ΔEVE <b>con su rango</b>, no con un número.</li>
+<li>El <b>tope de plazo del núcleo</b> es la palanca supervisora sobre este banco.</li>
+</ul>
+
+<!-- ==================== PARTE VII ==================== -->
+<h1 id="parte7"><span class="num">Parte VII</span>Los seis escenarios de choque</h1>
+
+<p class="nota">Código: <code>src/scenarios.py</code>. Es la única fuente de verdad sobre qué significa cada escenario, y los Módulos 3 y 4 lo consumen por igual.</p>
+
+<div class="caja clave">
+<div class="titulo">Por qué se definen una sola vez</div>
+<p>La unicidad no es estética. Si el NII y el EVE se calcularan bajo definiciones distintas del mismo escenario, <b>la tabla final del comité —que los pone en la misma fila— compararía peras con manzanas sin que nadie lo notara</b>. Ese es exactamente el tipo de error que sobrevive años en un banco porque cada área revisa su propio número y nadie revisa la juntura.</p>
+</div>
+
+<h2>41. Calibración por moneda y por qué no es un número universal</h2>
+
+<p>El estándar fija la magnitud del choque <b>por moneda</b>, no como un número redondo universal:</p>
+
+<table>
+<thead><tr><th class="c">Moneda</th><th class="c">Paralelo</th><th class="c">Cortas</th><th class="c">Largas</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>USD</b> (usada aquí)</td><td class="c"><b>200 pb</b></td><td class="c"><b>300 pb</b></td><td class="c"><b>150 pb</b></td></tr>
+<tr><td class="c">EUR</td><td class="c">200 pb</td><td class="c">250 pb</td><td class="c">100 pb</td></tr>
+<tr><td class="c">JPY</td><td class="c">100 pb</td><td class="c">100 pb</td><td class="c">100 pb</td></tr>
+<tr><td class="c">Monedas de economías volátiles</td><td class="c">hasta 400 pb</td><td class="c">—</td><td class="c">—</td></tr>
+</tbody>
+<caption>Extracto ilustrativo de la tabla de calibración del estándar. El proyecto usa la fila USD.</caption>
+</table>
+
+<p>La razón es estadística: el choque debe representar un <b>percentil comparable de la distribución histórica de tasas de esa moneda</b>. Un movimiento de 200 pb es un evento de cola en yenes y algo casi rutinario en una moneda emergente. Un número universal mediría riesgos de severidad muy distinta en bancos distintos y no sería comparable entre jurisdicciones, que es todo el punto de tener un estándar.</p>
+
+<p>El estándar deriva estas magnitudes de un percentil de los cambios de tasa observados en una ventana histórica larga, con un suelo y un techo para evitar valores absurdos en monedas con historia corta o anómala.</p>
+
+<div class="caja">
+<div class="titulo">Esta elección es la que más mueve el resultado del proyecto</div>
+<p>De ella depende directamente si el banco rompe el umbral del 15% del Tier 1. Con la calibración JPY (100 pb) el ΔEVE de este banco sería aproximadamente la mitad y no sería <i>outlier</i>. Elegir la fila USD y decirlo es parte del entregable.</p>
+</div>
+
+<h2>42. Los escalares de tramo</h2>
+
+<p>Los cuatro escenarios no paralelos necesitan repartir el choque desigualmente entre tramos de la curva. El estándar lo hace con un escalar exponencial:</p>
+
+<div class="eq">
+S<sub>corto</sub>(t) = e<sup>−t/x</sup>,&nbsp;&nbsp;&nbsp;&nbsp;S<sub>largo</sub>(t) = 1 − S<sub>corto</sub>(t)&nbsp;&nbsp;&nbsp;&nbsp;x = 4 años
+</div>
+
+<table>
+<thead><tr><th class="c">Plazo</th><th class="c">0</th><th class="c">3M</th><th class="c">1A</th><th class="c">2A</th><th class="c">5A</th><th class="c">10A</th><th class="c">20A</th></tr></thead>
+<tbody>
+<tr><td><b>S<sub>corto</sub></b></td><td class="c">1,000</td><td class="c">0,939</td><td class="c">0,779</td><td class="c">0,607</td><td class="c">0,287</td><td class="c">0,082</td><td class="c">0,007</td></tr>
+<tr><td><b>S<sub>largo</sub></b></td><td class="c">0,000</td><td class="c">0,061</td><td class="c">0,221</td><td class="c">0,393</td><td class="c">0,713</td><td class="c">0,918</td><td class="c">0,993</td></tr>
+</tbody>
+</table>
+
+<p>Es lo que hace que un choque «de cortas» sea <b>de cortas</b> y no un paralelo disfrazado. A 10 años, el escalar corto ya solo transmite el 8% del choque. La constante x = 4 años no es arbitraria: sitúa el punto de cruce (S<sub>corto</sub> = S<sub>largo</sub> = 0,5) en τ = 4·ln2 ≈ 2,77 años, que es aproximadamente donde el mercado separa el tramo dirigido por política monetaria del tramo dirigido por expectativas de largo plazo.</p>
+
+<h2>43. Construcción de los seis</h2>
+
+<div class="eq">
+<b>1. Paralelo arriba:</b>&nbsp;&nbsp;Δy(t) = +R<sub>paralelo</sub><br>
+<b>2. Paralelo abajo:</b>&nbsp;&nbsp;Δy(t) = −R<sub>paralelo</sub><br>
+<b>3. Empinamiento:</b>&nbsp;&nbsp;Δy(t) = −0,65·R<sub>cortas</sub>·S<sub>corto</sub>(t) + 0,90·R<sub>largas</sub>·S<sub>largo</sub>(t)<br>
+<b>4. Aplanamiento:</b>&nbsp;&nbsp;Δy(t) = +0,80·R<sub>cortas</sub>·S<sub>corto</sub>(t) − 0,60·R<sub>largas</sub>·S<sub>largo</sub>(t)<br>
+<b>5. Cortas arriba:</b>&nbsp;&nbsp;Δy(t) = +R<sub>cortas</sub>·S<sub>corto</sub>(t)<br>
+<b>6. Cortas abajo:</b>&nbsp;&nbsp;Δy(t) = −R<sub>cortas</sub>·S<sub>corto</sub>(t)
+</div>
+
+<div class="caja">
+<div class="titulo">Los factores 0,65 / 0,90 / 0,80 / 0,60 no son simétricos, y es a propósito</div>
+<p>Una curva <b>no se empina y se aplana con la misma intensidad en cada tramo</b>. Empíricamente, los empinamientos vienen más de caídas en el tramo corto (política monetaria expansiva) y los aplanamientos más de subidas en el corto (política restrictiva); el tramo largo se mueve menos en ambos casos.</p>
+<p>Reproducir los factores del estándar tal cual —en vez de «simplificar» a ±1— importa porque <b>el peor de los seis escenarios suele ser uno rotacional</b> y su magnitud depende directamente de estos números. En este banco el peor resulta ser el paralelo arriba, pero eso es un resultado, no un supuesto.</p>
+</div>
+
+<h2>44. El suelo post-choque</h2>
+
+<div class="eq">
+suelo(t) = mín( −100 pb + 5 pb·t , 0 )&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">t en años</span><br><br>
+curva final = máx( curva base + Δy(t) , suelo(t) )
+</div>
+
+<p>Empieza en −100 pb en el plazo inmediato y sube 5 pb por año hasta alcanzar 0% a los 20 años.</p>
+
+<p><b>Por qué existe:</b> sin él, el escenario de bajada aplicado a una curva ya baja produciría tasas profundamente negativas y un EVE que sería un artefacto aritmético. Si la curva a 3M está en 0,3% y se le restan 200 pb, queda en −1,7%; descontar veinte años a tasas así produce factores de descuento mayores que 1 y valores presentes sin sentido económico.</p>
+
+<p><b>Por qué es negativo y no cero:</b> es reconocimiento explícito de que <b>las tasas nominales negativas ocurrieron de verdad</b> —en euros, francos suizos, coronas suecas y yenes, durante años—. El estándar no las declara imposibles, solo acota cuánto. Poner el suelo en cero sería fingir que 2014–2022 no pasó en Europa.</p>
+
+<p><b>Por qué sube con el plazo:</b> las tasas negativas se concentraron siempre en el tramo corto, que es el que la política monetaria controla directamente. Ningún mercado ha sostenido tasas negativas a veinte años de forma persistente.</p>
+
+<h2>45. Convención: dos escenarios para NII, seis para EVE</h2>
+
+<p>La convención de la industria y del estándar es que el ΔNII se reporta con los <b>dos paralelos</b> y el ΔEVE con los <b>seis</b>. La razón no es pereza:</p>
+
+<ul>
+<li><b>El margen a 12 meses depende casi por completo del tramo corto</b>, que es donde repacta el balance dentro del horizonte. Los escenarios rotacionales se distinguen entre sí sobre todo en el tramo largo, que apenas entra en el cálculo.</li>
+<li><b>El EVE descuenta flujos a veinte años</b>, y ahí la forma de la curva es todo. Un empinamiento y un aplanamiento de la misma magnitud producen ΔEVE de signos opuestos.</li>
+</ul>
+
+<p>El proyecto <b>calcula siempre los seis</b> en ambos módulos; la convención decide qué se titula, no qué se computa. Ambas listas son parámetros de configuración. Y en efecto, la tabla del Módulo 3 muestra que los seis escenarios de NII producen resultados relativamente parecidos entre sí (+2,2% a +5,2%) mientras los de EVE se abren mucho más (−17,0% a +19,9%), que es exactamente lo que la teoría predice.</p>
+
+<!-- ==================== PARTE VIII ==================== -->
+<h1 id="parte8"><span class="num">Parte VIII</span>Módulo 3: el margen financiero</h1>
+
+<p class="nota">Código: <code>src/nii.py</code>, informe en <code>data/nii_report.md</code>. NII base: <b>1.566 M</b>.</p>
+
+<h2>46. Definición del NII y el supuesto de balance constante</h2>
+
+<p>El <b>margen financiero</b> (<i>net interest income</i>) es la diferencia entre los intereses devengados por el activo y los pagados por el pasivo en un horizonte, típicamente doce meses:</p>
+
+<div class="eq">
+NII = Σ<sub>m=1..12</sub> [ Σ<sub>i ∈ activo</sub> S<sub>i</sub> · r<sub>i</sub>(m) / 12 − Σ<sub>j ∈ pasivo</sub> S<sub>j</sub> · r<sub>j</sub>(m) / 12 ]
+</div>
+
+<h3>El supuesto rector: balance constante y margen constante</h3>
+
+<p>Es el estándar regulatorio para el cálculo de ΔNII, y consiste en:</p>
+
+<ul>
+<li>El balance <b>no crece ni cambia de composición</b> durante el horizonte.</li>
+<li>Lo que vence <b>se reinvierte en el mismo producto conservando su spread</b> sobre la curva.</li>
+<li><b>Solo se mueve la curva.</b></li>
+</ul>
+
+<div class="caja clave">
+<div class="titulo">Qué mide y qué no mide este supuesto</div>
+<p>Un banco real respondería a un choque de 200 pb <b>cambiando de estrategia comercial</b>: reajustaría precios, cambiaría el mix de captación, aceleraría o frenaría originación. El ΔNII estándar <b>no pretende predecir eso</b>.</p>
+<p>Lo que mide es la <b>sensibilidad del balance actual</b>, que es exactamente lo que un comité necesita saber <i>antes</i> de decidir si quiere cambiarlo. Es un ejercicio de «¿qué me pasaría si no hiciera nada?», no un pronóstico.</p>
+<p>Confundir ambas cosas es un error frecuente en presentaciones: alguien pregunta «¿pero ustedes no reaccionarían?» y la respuesta correcta es «claro, y por eso este número es el punto de partida de la discusión, no su conclusión».</p>
+</div>
+
+<h2>47. Mecánica de la proyección</h2>
+
+<p>La regla por instrumento es una sola línea:</p>
+
+<div class="eq">
+r<sub>i</sub>(m) = r<sub>i</sub>(0) + β<sub>i</sub> · Δcurva(τ<sub>i</sub>) · traspaso<sub>i</sub>(m)
+</div>
+
+<p>Con tres componentes que hay que distinguir:</p>
+
+<table>
+<thead><tr><th style="width:20%">Componente</th><th>Qué es · cómo se determina</th></tr></thead>
+<tbody>
+<tr><td><b>Δcurva(τ<sub>i</sub>)</b></td><td>El movimiento de la curva <b>en el plazo relevante para ese instrumento</b> (§48), convertido de composición continua a nominal según su frecuencia de pago.</td></tr>
+<tr><td><b>β<sub>i</sub></b></td><td>Traspaso. <b>1,0</b> para activos e instrumentos de mercado (repactan sin fricción). Para NMD, <b>β̂⁺ si el choque sube y β̂⁻ si baja</b>, tomadas del Módulo 2.</td></tr>
+<tr><td><b>traspaso<sub>i</sub>(m)</b></td><td>Fracción del traspaso ya materializada en el mes m. Para instrumentos contractuales es un escalón: <b>0 antes del repricing, 1 después</b>. Para NMD es el perfil de rezagos (§49).</td></tr>
+</tbody>
+</table>
+
+<h3>Cómo se decide si el choque «sube» o «baja»</h3>
+
+<p>El signo se juzga <b>en el tramo corto</b> —el ancla a 3 meses—, no en el promedio de la curva. Es lo correcto: la decisión de si el banco está en régimen de subida (β⁺) o de bajada (β⁻) la toma observando la tasa de política, que es lo que arrastra la remuneración de los depósitos. Un escenario de aplanamiento (cortas suben, largas bajan) es, para un depositante, un ciclo de alzas.</p>
+
+<h2>48. Qué plazo de la curva le toca a cada instrumento</h2>
+
+<p>Un error frecuente y silencioso es aplicar el movimiento de un único punto de la curva a todo el balance. La regla correcta:</p>
+
+<table>
+<thead><tr><th style="width:26%">Tipo de instrumento</th><th style="width:24%">Plazo de curva</th><th>Por qué</th></tr></thead>
+<tbody>
+<tr><td>Variable con repricing periódico</td><td>Frecuencia de repricing</td><td>Un crédito comercial que repacta cada trimestre toma <b>la tasa a 3 meses</b>, no la de su vencimiento a cinco años.</td></tr>
+<tr><td>Tasa fija</td><td>Plazo típico del producto</td><td>Al vencer se reinvierte en el mismo producto, cuya tasa de originación sale de ese punto de la curva.</td></tr>
+<tr><td>NMD (vista, ahorro)</td><td>Ancla corta (3M)</td><td>La remuneración de los depósitos sigue al tramo que la tasa de política arrastra.</td></tr>
+</tbody>
+</table>
+
+<h2>49. El perfil temporal de traspaso</h2>
+
+<p>Aquí es donde el Módulo 3 cobra el trabajo del Módulo 2. Los coeficientes de rezago estimados <b>son</b> el perfil temporal del traspaso: el coeficiente del rezago <i>k</i> es cuánto de un movimiento de hace <i>k</i> meses se refleja hoy en la tasa pagada. Su suma acumulada, normalizada, dice qué fracción del traspaso total ha ocurrido al mes <i>m</i>:</p>
+
+<div class="eq">
+traspaso(m) = Σ<sub>k=0..m</sub> a<sub>k</sub> / Σ<sub>k=0..L</sub> a<sub>k</sub>
+</div>
+
+<p>Con dos correcciones defensivas: se acota a [0, 1] y se aplica un <b>máximo acumulado</b>, de modo que la serie sea no decreciente. La justificación económica de esta segunda: <b>el traspaso no se deshace</b>. Un banco no vuelve a bajar la tasa que ya subió solo porque un coeficiente de rezago salga negativo por ruido muestral.</p>
+
+<div class="caja clave">
+<div class="titulo">No es un refinamiento cosmético</div>
+<table>
+<thead><tr><th>Supuesto de traspaso</th><th class="c">ΔNII paralelo arriba</th><th class="c">ΔNII paralelo abajo</th></tr></thead>
+<tbody>
+<tr><td>Con rezagos (usado)</td><td class="c pos">+2,77%</td><td class="c pos">+4,13%</td></tr>
+<tr><td>Inmediato (ingenuo)</td><td class="c">+0,34%</td><td class="c">+6,82%</td></tr>
+</tbody>
+</table>
+<p>Suponer traspaso inmediato <b>sobrestima el costo de fondeo del primer trimestre</b> y sesga el ΔNII al alza a la baja de forma masiva: la ganancia del escenario de subida pasa de +2,77% a +0,34%, es decir, casi desaparece. El efecto está bajo test.</p>
+</div>
+
+<h2>50. El piso de cero en la tasa pasiva</h2>
+
+<div class="eq">
+r<sub>j</sub>(m) ← máx( r<sub>j</sub>(m), 0 )&nbsp;&nbsp;para todo j en el pasivo
+</div>
+
+<p>Un banco <b>no puede cobrarle al minorista por depositar</b>. Hay excepciones documentadas —bancos europeos cobrando a saldos corporativos grandes durante el período de tasas negativas— pero para un depósito minorista la remuneración se detiene en cero, y el cliente siempre tiene la alternativa de retirar el efectivo.</p>
+
+<p>Esta restricción, que parece un detalle de implementación, resulta ser <b>la acotación más importante del resultado del módulo</b>. Se desarrolla en §52.</p>
+
+<h2>51. El resultado: una posición larga en volatilidad de tasas</h2>
+
+<table>
+<thead><tr><th>Escenario</th><th class="c">NII (M)</th><th class="c">Δ (M)</th><th class="c">Δ%</th></tr></thead>
+<tbody>
+<tr><td><b>Paralelo arriba</b></td><td class="c">1.610</td><td class="c">+43</td><td class="c pos"><b>+2,77%</b></td></tr>
+<tr><td><b>Paralelo abajo</b></td><td class="c">1.631</td><td class="c">+65</td><td class="c pos"><b>+4,13%</b></td></tr>
+<tr><td>Empinamiento</td><td class="c">1.601</td><td class="c">+35</td><td class="c pos">+2,22%</td></tr>
+<tr><td>Aplanamiento</td><td class="c">1.636</td><td class="c">+70</td><td class="c pos">+4,44%</td></tr>
+<tr><td>Cortas arriba</td><td class="c">1.647</td><td class="c">+81</td><td class="c pos">+5,17%</td></tr>
+<tr><td>Cortas abajo</td><td class="c">1.602</td><td class="c">+35</td><td class="c pos">+2,26%</td></tr>
+</tbody>
+<caption>NII base 1.566 M. <b>Los seis escenarios mejoran el margen.</b></caption>
+</table>
+
+<h3>Por qué no es un error de signo</h3>
+
+<p>Un choque simétrico que sube el margen en <b>ambos sentidos</b> parece un error. La descomposición muestra que no lo es: en el escenario de bajada el ingreso financiero cae 343 M, pero <b>el costo de fondeo cae 407 M</b>.</p>
+
+<p>El mecanismo es la asimetría del Módulo 2. Escrito como álgebra, para el bloque de depósitos:</p>
+
+<div class="eq">
+Escenario al alza:&nbsp;&nbsp;Δcosto = +D · β⁺ · Δr&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">β⁺ ≈ 0,28 → el banco retiene 72%</span><br>
+Escenario a la baja:&nbsp;&nbsp;Δcosto = −D · β⁻ · Δr&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">β⁻ ≈ 0,51 → el banco captura 51%</span><br><br>
+<span class="cmt">En ambas direcciones el término de depósitos aporta positivamente al margen.</span>
+</div>
+
+<div class="caja clave">
+<div class="titulo">La franquicia de depósitos es una opción</div>
+<p><b>Esto es una posición larga en volatilidad de tasas.</b> La franquicia de depósitos no es solo fondeo barato: es una <b>opción que el banco tiene contra sus depositantes</b> y que paga en ambos sentidos. Formalmente, el banco es largo un <i>straddle</i> sobre el nivel de tasas, financiado con la rigidez de precios que le da su poder de mercado.</p>
+<p>Ese es exactamente el argumento de Drechsler, Savov y Schnabl sobre la franquicia de depósitos como cobertura natural de tasa: el valor de la franquicia sube cuando las tasas suben, compensando parcialmente la caída de valor del activo largo.</p>
+</div>
+
+<h3>Cuánto vale la asimetría</h3>
+
+<table>
+<thead><tr><th>Beta usada</th><th class="c">Paralelo arriba</th><th class="c">Paralelo abajo</th></tr></thead>
+<tbody>
+<tr><td>Asimétrica (β̂⁺ / β̂⁻)</td><td class="c pos">+2,77%</td><td class="c pos">+4,13%</td></tr>
+<tr><td>Simétrica (promedio)</td><td class="c"><b>+0,05%</b></td><td class="c">+1,10%</td></tr>
+</tbody>
+</table>
+
+<p>El contrafactual es el mismo balance y la misma proyección, con una beta única en lugar de dos. <b>La ganancia no se reparte mal: se borra.</b> Con beta simétrica este banco parece prácticamente neutral al riesgo de tasa en el margen, cuando en realidad tiene una posición valiosa en ambos sentidos.</p>
+
+<p>Esa es la respuesta a por qué el Módulo 2 se molestó en estimar dos betas: no es precisión decorativa. Una beta única le da al comité una foto en la que <b>no hay nada que gestionar</b>.</p>
+
+<h2>52. Por qué la ganancia tiene fecha de caducidad</h2>
+
+<p>β⁻ solo paga <b>mientras quede tasa que recortar</b>. El ejercicio consiste en trasladar el mismo banco a entornos de tasa cada vez más bajos y recalcular:</p>
+
+<table>
+<thead><tr><th class="c">Nivel de partida (3M)</th><th class="c">NII base</th><th class="c">ΔNII arriba</th><th class="c">ΔNII abajo</th><th class="c">Holgura al piso</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>3,27% (hoy)</b></td><td class="c">1.566</td><td class="c pos">+2,77%</td><td class="c pos"><b>+4,13%</b></td><td class="c"><b>5 pb</b></td></tr>
+<tr><td class="c">2,27%</td><td class="c">1.462</td><td class="c pos">+2,96%</td><td class="c">+0,45%</td><td class="c">0 pb</td></tr>
+<tr><td class="c">1,27%</td><td class="c">1.358</td><td class="c pos">+3,18%</td><td class="c neg"><b>−10,26%</b></td><td class="c">0 pb</td></tr>
+<tr><td class="c">0,27%</td><td class="c">1.166</td><td class="c pos">+3,70%</td><td class="c neg"><b>−12,46%</b></td><td class="c">0 pb</td></tr>
+</tbody>
+</table>
+
+<div class="caja critica">
+<div class="titulo">El banco tiene 5 pb de holgura</div>
+<p>Al producto de depósito más barato de este banco le quedan <b>cinco puntos básicos</b> antes de chocar contra cero. Un solo recorte de 25 pb del banco central lo pone contra el piso, y a partir de ahí la ganancia del escenario a la baja no solo desaparece: <b>se invierte</b>, porque el activo sigue bajando y el pasivo ya no puede.</p>
+<p>Es la razón por la que <b>una franquicia de depósitos vale mucho menos en un entorno de tasas cero</b>, y por la que la banca europea y japonesa pasó una década sin poder monetizar la suya. Reportar el ΔNII sin esta acotación vendería como estructural una ganancia que depende del nivel de partida.</p>
+</div>
+
+<h3>Reconciliación con el diagnóstico del Módulo 0</h3>
+
+<table>
+<thead><tr><th>Método</th><th class="c">ΔNII (+200 pb)</th></tr></thead>
+<tbody>
+<tr><td>Gap estático a 12 meses (Módulo 0)</td><td class="c">+1,72%</td></tr>
+<tr><td>Proyección completa (Módulo 3)</td><td class="c">+2,77%</td></tr>
+</tbody>
+</table>
+
+<p>Miden lo mismo por caminos distintos y no tienen por qué coincidir. El del Módulo 0 reparte el choque proporcionalmente al tiempo que resta hasta el fin del horizonte y aplica la beta entera desde el momento de la repreciación; la proyección devenga mes a mes y usa el perfil temporal de traspaso.</p>
+
+<p><b>Que ambos den el mismo signo y un orden de magnitud parecido es la validación que interesa.</b> Si difirieran en signo, uno de los dos tendría un error. Está bajo test.</p>
+
+<h3>Los demás ejes de sensibilidad</h3>
+
+<table>
+<thead><tr><th>Eje</th><th class="c">Paralelo arriba</th><th class="c">Paralelo abajo</th></tr></thead>
+<tbody>
+<tr><td>Balance constante</td><td class="c">+2,77%</td><td class="c">+4,13%</td></tr>
+<tr><td>Balance con crecimiento 4,5%</td><td class="c">+2,75%</td><td class="c">+4,16%</td></tr>
+<tr><td>β activos = 1,00</td><td class="c">+2,77%</td><td class="c">+4,13%</td></tr>
+<tr><td>β activos = 0,90</td><td class="c">+0,57%</td><td class="c">+6,32%</td></tr>
+<tr><td>β activos = 0,80</td><td class="c neg">−1,62%</td><td class="c">+8,51%</td></tr>
+</tbody>
+</table>
+
+<p>Lectura: <b>la regla de balance apenas mueve el resultado</b> (0,02 pp) — el crecimiento afecta ingreso y costo casi por igual. En cambio <b>el traspaso en el activo es un eje muy sensible</b>: bajar β de activos de 1,00 a 0,80 invierte el signo del escenario al alza. Es realista preguntarse si la cartera de tarjetas administrada realmente repacta con β = 1; el barrido muestra cuánto importaría, y es una limitación declarada del caso base.</p>
+
+<!-- ==================== PARTE IX ==================== -->
+<h1 id="parte9"><span class="num">Parte IX</span>Módulo 4: el valor económico del patrimonio</h1>
+
+<p class="nota">Código: <code>src/eve.py</code>, informe en <code>data/eve_report.md</code>. EVE base <b>4.500 M</b> · Tier 1 <b>4.000 M</b> · umbral del <i>outlier test</i> <b>−600 M</b>.</p>
+
+<h2>53. Definición del EVE y qué entra en él</h2>
+
+<div class="eq">
+EVE = VP(activos) − VP(pasivos)
+</div>
+
+<p>El <b>patrimonio queda fuera de los pasivos</b>, y no es un detalle: el EVE <i>es</i> el valor del patrimonio económico, así que incluirlo entre los pasivos sería contarlo dos veces. Los instrumentos no sensibles entran a valor en libros, porque no responden a la curva.</p>
+
+<p>Por construcción, el EVE de partida de este banco es exactamente <b>4.500 M</b>, igual al patrimonio contable. Eso no es casualidad y es consecuencia directa de la convención de valoración que se explica a continuación.</p>
+
+<h2>54. Calibración a la par: aislar riesgo de tasa de riesgo de crédito</h2>
+
+<p>Para cada instrumento se resuelve el <b>spread constante s</b> tal que su valor presente iguale su saldo en libros hoy:</p>
+
+<div class="eq">
+hallar s tal que&nbsp;&nbsp;Σ<sub>k</sub> CF<sub>k</sub> · e<sup>−(y(t<sub>k</sub>) + s)·t<sub>k</sub></sup> = saldo en libros<br><br>
+<span class="cmt">resuelto por bisección robusta (Brent) en el intervalo s ∈ [−50%, +200%]</span>
+</div>
+
+<p>El spread se calibra <b>una sola vez sobre la curva base</b> y se reutiliza sin cambios en los seis escenarios.</p>
+
+<div class="caja clave">
+<div class="titulo">Tres consecuencias, y las tres importan</div>
+<ol>
+<li><b>EVE(t=0) reproduce exactamente el valor en libros.</b> La convención no inventa plusvalías ni minusvalías latentes que después contaminarían el Δ.</li>
+<li><b>El choque mueve solo la parte libre de riesgo</b>, así que el <b>ΔEVE es riesgo de tasa puro</b> y no una mezcla con riesgo de crédito.</li>
+<li><b>El spread capturado —el margen comercial de cada producto— queda explícito</b> en lugar de escondido dentro de la curva de descuento.</li>
+</ol>
+</div>
+
+<div class="caja critica">
+<div class="titulo">El error que esta convención evita</div>
+<p>Descontar flujos que llevan spread de crédito usando una curva libre de riesgo <b>infla el activo muy por encima de su valor en libros</b> —un crédito de consumo al 12% descontado al 4% vale mucho más que su nominal— y hace que el ΔEVE mida dos riesgos a la vez.</p>
+<p>Es un error frecuente y <b>difícil de detectar, porque el número resultante <i>parece</i> razonable</b>. El síntoma diagnóstico es que el EVE base no coincide con el patrimonio contable, y por eso el proyecto lo reporta explícitamente como control.</p>
+</div>
+
+<h2>55. Flujos de repreciación: por qué un flotante vale la par en cada reset</h2>
+
+<p>La decisión que <b>decide todo el módulo</b>, y la que produjo el error más costoso del proyecto.</p>
+
+<h3>El teorema</h3>
+
+<p>Considérese un bono a tasa flotante que paga <span class="v">r<sub>reset</sub> · Δ</span> en cada período y devuelve el nominal al final. Justo después de un reset, su cupón para el período siguiente es exactamente la tasa de mercado para ese plazo. Por inducción hacia atrás desde el último período:</p>
+
+<div class="eq">
+VP<sub>último reset</sub> = [ N·(1 + r·Δ) ] · DF(Δ) = N·(1 + r·Δ) / (1 + r·Δ) = <b>N</b><br><br>
+<span class="cmt">y así hacia atrás: en cada fecha de reset el flotante vale exactamente su nominal</span>
+</div>
+
+<p><b>Corolario:</b> la exposición a riesgo de tasa de un instrumento flotante <b>se agota en su próximo repricing</b>. Su duración es el plazo hasta el reset, no hasta el vencimiento, por lejos que esté éste.</p>
+
+<h3>La regla implementada</h3>
+
+<div class="eq">
+horizonte de flujos = vencimiento&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">si tasa fija</span><br>
+horizonte de flujos = próxima repreciación&nbsp;&nbsp;<span class="cmt">si variable o administrada</span><br><br>
+<span class="cmt">con el principal amortizado antes del reset en sus fechas, y el saldo vivo restante al reset</span>
+</div>
+
+<div class="caja critica">
+<div class="titulo">El error que se cometió y su costo</div>
+<p>La primera versión valoraba <b>todos</b> los instrumentos hasta vencimiento. Un crédito comercial a cinco años que repacta cada trimestre no tiene duración de cinco años, pero eso es lo que el código le atribuía.</p>
+<table>
+<thead><tr><th></th><th class="c">Duración del activo</th><th class="c">ΔEVE / Tier 1</th></tr></thead>
+<tbody>
+<tr><td>Flujos contractuales (mal)</td><td class="c">2,96 a</td><td class="c neg">−37,4%</td></tr>
+<tr><td>Flujos de repreciación (bien)</td><td class="c"><b>1,98 a</b></td><td class="c"><b>−17,0%</b></td></tr>
+</tbody>
+</table>
+<p>Tratar los 16.200 M de cartera comercial variable como si fueran bonos a cinco años <b>infla la duración del activo casi un año entero y más que duplica el ΔEVE</b>.</p>
+<p>Y lo peligroso: <b>−37% también «parece» un resultado plausible</b> para un banco con 9.000 M de hipotecas fijas. Sin la comprobación de coherencia contra el Módulo 1 el error habría sobrevivido.</p>
+</div>
+
+<div class="caja clave">
+<div class="titulo">La coherencia entre módulos no es opcional</div>
+<p>Es <b>exactamente la misma regla</b> que usa el gap del Módulo 1 para asignar bandas. Y esa coherencia es estructural, no estética: <b>si el gap y el EVE clasificaran el mismo instrumento con horizontes distintos, las dos métricas del informe describirían balances diferentes</b> y la tabla conjunta del comité sería incoherente sin que nadie lo notara.</p>
+<p>El código comparte la lógica de amortización (<code>amortization_schedule</code>) entre ambos módulos precisamente para que no puedan divergir.</p>
+</div>
+
+<h2>56. Duración efectiva por diferencias finitas</h2>
+
+<p>Las duraciones y convexidades del módulo se calculan <b>numéricamente</b>, desplazando la curva ±1 pb:</p>
+
+<div class="eq">
+D<sub>ef</sub> = − ( VP<sub>+h</sub> − VP<sub>−h</sub> ) / ( 2·h·VP<sub>0</sub> )&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">diferencia central, error O(h²)</span><br><br>
+C<sub>ef</sub> = ( VP<sub>+h</sub> + VP<sub>−h</sub> − 2·VP<sub>0</sub> ) / ( h²·VP<sub>0</sub> )&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">h = 1 pb</span>
+</div>
+
+<div class="caja">
+<div class="titulo">Por qué efectiva y no analítica</div>
+<p>La duración analítica supone que <b>los flujos no cambian con la tasa</b>. Aquí ya no es cierto para los NMD, cuyo perfil de bandas sale de un modelo de comportamiento, y dejaría de serlo por completo si el proyecto incorporara prepago.</p>
+<p>La duración efectiva mide <b>lo que realmente pasa cuando se mueve la curva</b>, que es lo que un comité necesita. Es además la definición que usa el estándar y la única aplicable a instrumentos con opcionalidad.</p>
+<p>La elección de h = 1 pb equilibra dos errores opuestos: h grande introduce error de truncamiento por convexidad (la fórmula supone linealidad local); h muy pequeño introduce error de cancelación catastrófica en coma flotante al restar dos números casi iguales.</p>
+</div>
+
+<table>
+<thead><tr><th></th><th class="c">Duración efectiva</th><th class="c">Convexidad efectiva</th><th class="c">Valor presente</th></tr></thead>
+<tbody>
+<tr><td>Activo</td><td class="c"><b>1,98 a</b></td><td class="c">13,0</td><td class="c">~47.000 M</td></tr>
+<tr><td>Pasivo</td><td class="c"><b>1,37 a</b></td><td class="c">8,0</td><td class="c">~42.500 M</td></tr>
+<tr><td><b>Gap de duración</b></td><td class="c"><b>+0,74 a</b></td><td class="c">—</td><td class="c">—</td></tr>
+</tbody>
+</table>
+
+<h2>57. Taylor: primer orden, segundo orden y el error residual</h2>
+
+<div class="eq">
+ΔEVE<sup>(1)</sup> = − ( D<sub>A</sub>·A − D<sub>L</sub>·L ) · Δy<br><br>
+ΔEVE<sup>(2)</sup> = ΔEVE<sup>(1)</sup> + ½ · ( C<sub>A</sub>·A − C<sub>L</sub>·L ) · Δy²<br><br>
+<span class="cmt">error de la aproximación lineal ∝ Δy², error de la cuadrática ∝ Δy³</span>
+</div>
+
+<table>
+<thead><tr><th class="c">Choque</th><th class="c">Revaluación completa</th><th class="c">Primer orden</th><th class="c">Segundo orden</th><th class="c">Error lineal</th></tr></thead>
+<tbody>
+<tr><td class="c">+50 pb</td><td class="c">−181</td><td class="c">−184</td><td class="c">−180</td><td class="c">−2,0%</td></tr>
+<tr><td class="c">+100 pb</td><td class="c">−354</td><td class="c">−368</td><td class="c">−354</td><td class="c">−3,9%</td></tr>
+<tr><td class="c">+200 pb</td><td class="c">−682</td><td class="c">−736</td><td class="c">−679</td><td class="c">−8,0%</td></tr>
+<tr><td class="c">+400 pb</td><td class="c">−1.265</td><td class="c">−1.472</td><td class="c">−1.244</td><td class="c">−16,4%</td></tr>
+<tr><td class="c">+800 pb</td><td class="c">−2.190</td><td class="c">−2.944</td><td class="c">−2.033</td><td class="c neg"><b>−34,4%</b></td></tr>
+</tbody>
+<caption>Cifras en USD millones. El error de primer orden crece aproximadamente con el <b>cuadrado</b> del choque: −2,0% → −8,0% → −34,4% al duplicar y volver a duplicar.</caption>
+</table>
+
+<div class="caja clave">
+<div class="titulo">El argumento cuantitativo contra los límites basados solo en duración</div>
+<p>Un límite de ALM expresado únicamente en duración o en gap de duración <b>mide bien el riesgo del día a día y subestima precisamente el que motiva tener límites</b>.</p>
+<p>A ±50 pb —el movimiento típico entre dos reuniones de comité— el error es del 2% y es irrelevante. A ±800 pb —un escenario de estrés severo, el tipo de cosa que un límite debe cubrir— el error es del 34% <b>y va en la dirección equivocada</b>: la aproximación lineal dice −2.944 M cuando la realidad es −2.190 M. En este caso sobrestima, lo que es conservador; pero en la dirección de bajada subestima la ganancia, y con opcionalidad negativa el error puede ir en contra del banco.</p>
+<p>El término de convexidad recupera casi todo: el error de segundo orden a 800 pb es del 7%, cinco veces menor.</p>
+</div>
+
+<h2>58. El gap de duración ajustado por apalancamiento</h2>
+
+<div class="eq">
+D<sub>gap</sub> = D<sub>A</sub> − D<sub>L</sub> · ( L / A )
+</div>
+
+<p>El factor <span class="v">L/A</span> no es opcional. La comparación directa <span class="v">D<sub>A</sub> − D<sub>L</sub></span> ignora que el pasivo es menor que el activo por la magnitud del patrimonio. Con A ≈ 47.000 M y L ≈ 42.500 M, el ratio es 0,904, y el gap ajustado (+0,74 a) es sensiblemente distinto del gap sin ajustar (+0,61 a).</p>
+
+<p>La interpretación es directa: el gap de duración ajustado es la <b>duración del patrimonio económico multiplicada por el apalancamiento</b>. Un banco con D<sub>gap</sub> = 0 tiene un patrimonio económico inmunizado ante desplazamientos paralelos pequeños de la curva.</p>
+
+<h2>59. El outlier test del 15% del Tier 1</h2>
+
+<div class="eq">
+¿ peor<sub>escenarios</sub> ( ΔEVE ) ≤ −0,15 × Tier 1 ?<br><br>
+<span class="cmt">Tier 1 = 4.000 M &nbsp;⟹&nbsp; umbral = −600 M</span>
+</div>
+
+<p>El resultado <i>headline</i> es <b>el peor de los seis</b>, es decir el máximo deterioro, y es lo que se compara contra el umbral.</p>
+
+<table>
+<thead><tr><th>Escenario</th><th class="c">ΔNII 12m</th><th class="c">ΔEVE (M)</th><th class="c">ΔEVE / Tier 1</th><th class="c">¿Outlier?</th></tr></thead>
+<tbody>
+<tr><td><b>Paralelo arriba</b> ⟵ peor</td><td class="c pos"><b>+2,77%</b></td><td class="c">−682</td><td class="c neg"><b>−17,0%</b></td><td class="c neg"><b>SÍ</b></td></tr>
+<tr><td>Paralelo abajo</td><td class="c pos">+4,13%</td><td class="c">+796</td><td class="c pos">+19,9%</td><td class="c">no</td></tr>
+<tr><td>Empinamiento</td><td class="c pos">+2,22%</td><td class="c">−306</td><td class="c">−7,7%</td><td class="c">no</td></tr>
+<tr><td>Aplanamiento</td><td class="c pos">+4,44%</td><td class="c">+155</td><td class="c pos">+3,9%</td><td class="c">no</td></tr>
+<tr><td>Cortas arriba</td><td class="c pos">+5,17%</td><td class="c">−160</td><td class="c">−4,0%</td><td class="c">no</td></tr>
+<tr><td>Cortas abajo</td><td class="c pos">+2,26%</td><td class="c">+166</td><td class="c pos">+4,1%</td><td class="c">no</td></tr>
+</tbody>
+<caption>La tabla que va al comité. <b>Es el resultado que el proyecto existe para demostrar.</b></caption>
+</table>
+
+<div class="caja clave">
+<div class="titulo">La tensión central, con números propios</div>
+<p><b>Ante +200 pb el margen mejora +2,77% y el valor económico se deteriora −17,0% del Tier 1.</b></p>
+<p>No es una contradicción: son <b>dos horizontes</b>. El NII mira doce meses y ahí manda quién repacta antes; el EVE descuenta toda la vida de los flujos y ahí manda quién tiene más duración.</p>
+<p>Este banco <b>cobra rápido</b> en su activo indexado y <b>paga despacio</b> en sus depósitos —gana margen— mientras carga <b>9.000 M de hipotecas fijas originadas con la referencia en 1,5%</b> —pierde valor—.</p>
+<p><b>Gestionar solo por NII llevaría a este banco a celebrar una subida de tasas que le está destruyendo patrimonio económico.</b> Que las dos métricas estén en la misma tabla, calculadas sobre los mismos seis escenarios definidos una sola vez, es todo el argumento. Bajo test en <code>test_la_tension_central_del_proyecto</code>.</p>
+</div>
+
+<h3>Cuánto vale el trabajo del Módulo 2</h3>
+
+<table>
+<thead><tr><th>Tratamiento de los NMD</th><th class="c">Peor ΔEVE</th><th class="c">/ Tier 1</th><th class="c">¿Outlier?</th></tr></thead>
+<tbody>
+<tr><td>Contractual (Módulo 1)</td><td class="c">−1.494 M</td><td class="c neg"><b>−37,3%</b></td><td class="c neg">SÍ</td></tr>
+<tr><td>Conductual (Módulo 2)</td><td class="c">−682 M</td><td class="c">−17,0%</td><td class="c neg">SÍ</td></tr>
+</tbody>
+</table>
+
+<p>Tratar los depósitos como exigibles mañana los hace valer su nominal pase lo que pase: <b>no aportan nada que compense la duración del activo</b>. El modelo conductual les da el plazo que su comportamiento justifica, y con él absorben más de la mitad del deterioro. <b>Todo el trabajo del Módulo 2 se cobra en esta tabla.</b></p>
+
+<h3>Reconciliación con el Módulo 0 — y un error conceptual costoso</h3>
+
+<p>El diagnóstico del Módulo 0 da <b>−21,9%</b> (primer orden); aquí sale <b>−17,0%</b> por revaluación completa, y la diferencia es exactamente el error de la aproximación lineal a 200 pb (−8,0%, §57). Coherente.</p>
+
+<p>Más interesante es de dónde venía el número que ese diagnóstico daba <b>antes</b> de la revisión final: <b>−11,5%</b>, con el que el banco «cumplía» el objetivo pre-registrado de −9% a −13%. Usaba la duración de pasivo <b>sin ajustar por beta</b> —el núcleo de volumen en lugar del de repreciación— cuando la propia función ya calculaba la versión correcta al lado.</p>
+
+<div class="caja critica">
+<div class="titulo">Un control de validación que halaga al balance es peor que no tenerlo</div>
+<p>La diferencia es <b>de definición de núcleo</b>, y es exactamente el error conceptual que el proyecto entero persigue:</p>
+<ul class="compacta">
+<li>Núcleo de <b>volumen</b> en vista: 0,90 — lo que no se va.</li>
+<li>Núcleo de <b>repreciación</b> (IRRBB): estable × (1−β) = <b>0,65</b> — lo que no repacta.</li>
+</ul>
+<p><b>Un cuarto del depósito a la vista es dinero que se queda y aun así sigue a la tasa de mercado.</b> Contarlo como núcleo le atribuye un plazo largo que no tiene y hace parecer al banco más cubierto de lo que está.</p>
+<p>Cuánto cuesta ignorar esa nota conceptual: <b>casi seis puntos de Tier 1, la diferencia entre pasar el outlier test y no pasarlo</b>. Y el error estaba escondido <i>dentro del control de calidad</i>, que es el peor sitio posible.</p>
+</div>
+
+<h2>60. El hallazgo que cierra el proyecto</h2>
+
+<table>
+<thead><tr><th class="c">Vida supuesta del núcleo</th><th class="c">Aplicada</th><th class="c">ΔEVE / Tier 1</th><th class="c">¿Outlier?</th></tr></thead>
+<tbody>
+<tr><td class="c">2,0 a</td><td class="c">2,0 a</td><td class="c neg">−26,5%</td><td class="c neg">SÍ</td></tr>
+<tr><td class="c">3,0 a</td><td class="c">3,0 a</td><td class="c neg">−21,1%</td><td class="c neg">SÍ</td></tr>
+<tr><td class="c"><b>4,0 a (caso base)</b></td><td class="c">4,0 a</td><td class="c neg"><b>−16,0%</b></td><td class="c neg"><b>SÍ</b></td></tr>
+<tr><td class="c">5,0 a</td><td class="c">5,0 a</td><td class="c">−12,2%</td><td class="c pos"><b>no</b></td></tr>
+<tr><td class="c">7,0 a</td><td class="c"><b>5,0 a (tope)</b></td><td class="c">−12,2%</td><td class="c pos"><b>no</b></td></tr>
+</tbody>
+</table>
+
+<div class="caja critica">
+<div class="titulo">El veredicto regulatorio depende de un supuesto no identificado</div>
+<p><b>El banco es o no es <i>outlier</i> según una hipótesis que el Módulo 2 demostró que no puede falsar con sus datos.</b></p>
+<p>No es que la estimación sea imprecisa: es que el saldo agregado no contiene <i>ninguna</i> información sobre ese parámetro (§37). El banco tiene que decirle eso al supervisor —no elegir la punta del rango que le conviene—. La conclusión no está determinada por los datos sino por una hipótesis que los datos no pueden respaldar.</p>
+<p>Bajo test en <code>test_el_veredicto_regulatorio_depende_del_supuesto_no_identificado</code>.</p>
+</div>
+
+<div class="caja clave">
+<div class="titulo">Y ahí se ve para qué sirve el tope de 5 años</div>
+<p><b>Es lo único que impide al banco suponerse fuera del problema.</b> Sin él, la sensibilidad seguiría subiendo: 7 años, 10 años, y en algún punto el descalce desaparece en el papel. Con el tope, <b>el mejor caso alcanzable es −12,2%</b> — justo por debajo del umbral del 15%.</p>
+<p>El supervisor acotó exactamente el margen de maniobra que importaba. Ese es el cierre del arco que empezó en el Módulo 1: la regulación no está pidiendo una estimación mejor de un parámetro inestimable; está acotando el rango dentro del cual la respuesta sigue siendo informativa.</p>
+</div>
+
+<h3>El eje de balance: la sensibilidad prometida en el Módulo 0</h3>
+
+<table>
+<thead><tr><th class="c">Hipotecario</th><th class="c">Comercial</th><th class="c">Dur. activo</th><th class="c">Gap dur.</th><th class="c">ΔEVE / Tier 1</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>18% (base)</b></td><td class="c">32,4%</td><td class="c">1,98 a</td><td class="c">+0,74 a</td><td class="c neg">−17,0%</td></tr>
+<tr><td class="c">21%</td><td class="c">29,4%</td><td class="c">2,13 a</td><td class="c">+0,88 a</td><td class="c neg">−20,3%</td></tr>
+<tr><td class="c">25%</td><td class="c">25,4%</td><td class="c">2,32 a</td><td class="c">+1,07 a</td><td class="c neg"><b>−24,6%</b></td></tr>
+</tbody>
+<caption>Lo que gana el hipotecario lo cede el comercial, así que el balance sigue cuadrando.</caption>
+</table>
+
+<p>No es un artificio: es el traslado que un banco haría de verdad al crecer en minorista de largo plazo, y es el que más cambia su perfil —cambia cartera indexada que repacta cada trimestre por cartera fija a quince años—.</p>
+
+<p>En el Módulo 0 se decidió <b>no</b> subir este mix para acercar el banco al umbral, porque los objetivos se habían pre-registrado y moverlo habría sido acomodar el balance al resultado deseado. Aparece aquí como sensibilidad, que es su sitio.</p>
+
+<!-- ==================== PARTE X ==================== -->
+<h1 id="parte10"><span class="num">Parte X</span>Metodología y epistemología del modelo</h1>
+
+<p>Esta parte no habla de finanzas sino de <b>cómo se decide que un modelo es correcto</b>. Es la parte que en un banco corresponde a la función de validación y a la política de riesgo de modelo, y es la que separa un proyecto de datos de un modelo que un supervisor acepta.</p>
+
+<h2>61. Pre-registro: por qué los objetivos se fijan antes</h2>
+
+<p>Los seis objetivos de calibración se escribieron <b>antes de generar el primer dato</b>. La lógica es la misma que la del pre-registro en investigación clínica: si los criterios de aceptación se fijan después de ver los resultados, dejan de ser criterios y pasan a ser descripciones.</p>
+
+<p>El proyecto distingue explícitamente dos vocabularios que se confunden con facilidad:</p>
+
+<dl>
+<dt>Objetivos de calibración</dt>
+<dd>Criterios de aceptación fijados antes de generar. <b>No se tocan.</b> Si resultan inalcanzables con parámetros defendibles, se reportan como incumplidos.</dd>
+<dt>Parámetros de calibración</dt>
+<dd>Las perillas que se mueven para intentar alcanzarlos: spreads, plazos, duraciones objetivo, <i>shares</i> de balance.</dd>
+</dl>
+
+<p><b>La prueba de que el pre-registro funcionó</b> es que dos de los seis objetivos quedaron incumplidos y se reportaron como tales. Un proyecto en el que los seis objetivos se cumplen es sospechoso: o los objetivos eran triviales o la meta se movió.</p>
+
+<div class="caja">
+<div class="titulo">El barrido de sensibilidad también se pre-registró</div>
+<p><code>SENSITIVITY_GRID</code> declara los cuatro ejes de barrido en <code>config/params.py</code> desde el Módulo 0, no en el Módulo 4 donde se usan. Es para dejar constancia de que <b>el barrido se diseñó antes de ver los resultados</b>. Elegir después qué sensibilidad mostrar es una forma sutil de seleccionar el resultado que conviene.</p>
+<p>Y la revisión final encontró que uno de esos cuatro ejes —el mix hipotecario— estaba declarado y nunca implementado. Se implementó. Un compromiso declarado y no cumplido es peor que no declararlo.</p>
+</div>
+
+<h2>62. Identificación frente a estimación</h2>
+
+<p>Es la distinción metodológica más importante del proyecto y merece enunciarse con precisión.</p>
+
+<table>
+<thead><tr><th style="width:22%">Concepto</th><th>Definición</th><th style="width:26%">Caso en este proyecto</th></tr></thead>
+<tbody>
+<tr><td><b>Estimable con precisión</b></td><td>El parámetro deja huella clara en los datos; más datos reducen el error estándar.</td><td>β⁺, β⁻: recuperadas con error &lt; 0,05.</td></tr>
+<tr><td><b>Identificación débil</b></td><td>El parámetro deja huella, pero pequeña frente al ruido. Más datos ayudan, lentamente.</td><td>La proporción estable: se recupera pero con sesgo sistemático.</td></tr>
+<tr><td><b>No identificado</b></td><td>El parámetro <b>no deja ninguna huella</b> en las variables observadas. Ninguna cantidad de datos ayuda.</td><td><b>La vida del núcleo.</b> Correlación 0,999987 entre 3 y 10 años.</td></tr>
+</tbody>
+</table>
+
+<div class="caja clave">
+<div class="titulo">Las tres consecuencias de método</div>
+<ol>
+<li><b>Cuando un parámetro no está identificado, reportar un número puntual afirma más de lo que se sabe.</b> El entregable honesto es el rango que ese parámetro produce.</li>
+<li><b>La sensibilidad deja de ser un apéndice y pasa a ser el resultado principal.</b> No es «además hicimos un análisis de robustez»; es «esto es lo que sabemos, y es un intervalo».</li>
+<li><b>Cuando además el parámetro tiene incentivo unidireccional</b> —empuja el resultado en la dirección que al banco le conviene— la respuesta institucional correcta no es pedir mejor estimación sino <b>acotar el rango por norma</b>. Eso es exactamente lo que hacen los topes de IRRBB, y explicarlo así es la contribución conceptual del proyecto.</li>
+</ol>
+</div>
+
+<h3>Cómo se demuestra la no identificación</h3>
+
+<p>El procedimiento es transferible a cualquier proyecto de modelado y vale la pena aislarlo:</p>
+
+<ol>
+<li>Generar el sistema varias veces variando <b>únicamente</b> el parámetro en cuestión.</li>
+<li>Mantener idéntico todo lo demás, <b>incluido el consumo de números aleatorios</b> — en el código esto obliga a llamar a <code>generate_yield_curves</code> aunque su resultado no se use, para que el flujo del generador quede alineado y la comparación aísle el efecto del parámetro y no el del muestreo.</li>
+<li>Comparar las series <b>observables</b>, no las latentes.</li>
+<li>Comparar la magnitud de la diferencia contra la magnitud del ruido de la serie.</li>
+</ol>
+
+<p>Si la señal está por debajo del ruido, el parámetro no es identificable desde esa serie. Es un experimento barato y casi nadie lo hace.</p>
+
+<h2>63. Tests que codifican invariantes frente a tests que codifican creencias</h2>
+
+<p>El proyecto tiene 238 tests, y la revisión final encontró que uno de ellos estaba mal por una razón interesante.</p>
+
+<p><code>test_el_eve_no_supera_el_umbral_de_alerta_supervisora</code> afirmaba que el banco <b>no</b> era <i>outlier</i>. Al corregir el error de definición de núcleo en <code>calibration_metrics</code>, ese test <b>falló — correctamente</b>.</p>
+
+<div class="caja critica">
+<div class="titulo">La distinción</div>
+<table>
+<thead><tr><th style="width:30%">Tipo de test</th><th>Qué afirma</th><th style="width:24%">Ejemplos en el proyecto</th></tr></thead>
+<tbody>
+<tr><td><b>Invariante</b></td><td>Una propiedad que <b>debe</b> cumplirse siempre, por definición o por identidad. Si falla, hay un error.</td><td>«El balance cuadra». «Un bono a la par vale su nominal». «core + no_core = saldo». «Un balance calzado da ΔEVE ≈ 0».</td></tr>
+<tr><td><b>Creencia</b></td><td>Un resultado numérico que se espera <b>dado el estado actual</b> de la calibración. Si falla, puede que el modelo haya mejorado.</td><td>«El banco no es outlier». «La duración de activos está en 2,2–2,5».</td></tr>
+</tbody>
+</table>
+<p>Un test de creencia disfrazado de invariante es peligroso: <b>hace fallar la suite cuando se corrige un error</b>, e incentiva a revertir la corrección para que los tests pasen. Es exactamente el mecanismo por el que un bug conceptual sobrevive a una refactorización.</p>
+</div>
+
+<p>La corrección fue reescribirlo para que afirme <b>lo que de verdad se sabe</b> —que el banco sí supera el umbral, con el número concreto y su rango de sensibilidad— y añadir un test aparte que <b>fija la elección de convención de duración</b>, que es la invariante real que había detrás.</p>
+
+<h3>Los tests conceptuales del proyecto</h3>
+
+<p>Vale la pena señalar una categoría propia: tests cuyo nombre es una afirmación económica, no técnica. Existen para que un hallazgo no se pierda en un refactor:</p>
+
+<ul class="compacta">
+<li><code>test_el_gap_contradice_al_margen_financiero</code> — el hallazgo del Módulo 1.</li>
+<li><code>test_el_gap_conductual_sigue_sin_predecir_el_signo_del_margen</code> — la acotación del Módulo 2.</li>
+<li><code>test_la_tension_central_del_proyecto</code> — NII sube y EVE baja ante el mismo choque.</li>
+<li><code>test_el_veredicto_regulatorio_depende_del_supuesto_no_identificado</code> — el cierre del Módulo 4.</li>
+</ul>
+
+<p>Y <code>tests/test_scope.py</code>, que comprueba que <b>las cifras que el README titula coincidan con las que el código produce hoy</b>. Un README que se desincroniza da confianza falsa, y es de las cosas que más rápido se degradan.</p>
+
+<h2>64. Las cuatro correcciones y qué enseña cada una</h2>
+
+<p>La revisión crítica final encontró cuatro hallazgos. Se listan con su lección porque, en conjunto, son lo más transferible del proyecto.</p>
+
+<h3>1. El diagnóstico halagaba al balance <span class="nota">— el serio</span></h3>
+
+<p><code>calibration_metrics</code> calculaba el ΔEVE con la duración de pasivo de <b>runoff</b> en lugar de la <b>efectiva</b> (beta-ajustada), <b>teniendo ambas disponibles en la misma función</b>. Resultado: −11,5% del Tier 1 y objetivo pre-registrado «cumplido», cuando la revaluación completa da −17,0% y el banco es <i>outlier</i>.</p>
+
+<p><b>Lección:</b> es el mismo error conceptual que el Módulo 4 documenta —núcleo de volumen contra núcleo de repreciación— pero <b>escondido dentro del control de calidad</b>. Un control de validación que favorece al balance es peor que no tenerlo, porque produce confianza donde debería producir alarma. Corregido: ahora da −21,9% y marca el objetivo como incumplido.</p>
+
+<h3>2. Un test codificaba una creencia</h3>
+
+<p>Ver §63. <b>Lección:</b> cuando un test falla tras una corrección, la primera pregunta no es «¿cómo lo arreglo?» sino «¿qué afirmaba este test y sigue siendo cierto?».</p>
+
+<h3>3. Un compromiso declarado y no cumplido</h3>
+
+<p><code>SENSITIVITY_GRID</code> declaraba el barrido de mix hipotecario desde el Módulo 0 y <b>nunca se implementó</b>. <b>Lección:</b> declarar un análisis y no hacerlo es peor que no declararlo, porque el lector asume que se hizo. Implementado en <code>sensibilidad_mix_hipotecario</code>.</p>
+
+<h3>4. Configuración muerta</h3>
+
+<p>Una constante declarada y nunca leída (eliminada), y una función implementada, probada y no usada por producción —<code>year_fraction_30_360</code>, cuya convención está implementada implícitamente—. <b>Lección:</b> se dejó documentado en vez de fingir que se usa. Un archivo de configuración con parámetros muertos hace que el lector no sepa cuáles importan.</p>
+
+<h3>Las tres correcciones de modelado, en perspectiva</h3>
+
+<p>Además de las cuatro de la revisión, el proyecto tiene tres correcciones de especificación que ocurrieron durante la construcción:</p>
+
+<table>
+<thead><tr><th style="width:26%">Error</th><th style="width:24%">Síntoma que lo delató</th><th>Lección general</th></tr></thead>
+<tbody>
+<tr><td><b>Patología de signo</b> en la beta (§17)</td><td>Beta estimada de −0,15</td><td>El <b>signo</b> de un parámetro es mejor diagnóstico que su magnitud. Y la forma correcta de escribir un modelo suele ser la forma en que los profesionales hablan de él.</td></tr>
+<tr><td><b>Umbral inalcanzable</b> del control #7 (§23)</td><td>R² topaba en 0,50 exactamente, con ruido cero</td><td>Un umbral que no se alcanza <b>ni en el mejor caso posible</b> no es exigente: está mal planteado. Derivar el techo teórico antes de calibrar habría ahorrado el hallazgo.</td></tr>
+<tr><td><b>Flujos contractuales</b> en el EVE (§55)</td><td>ΔEVE de −37,4%, coherente con nada</td><td>Un resultado <b>plausible pero incoherente con otro módulo</b> es el error más peligroso. La única defensa es exigir coherencia explícita entre métricas que comparten supuestos.</td></tr>
+</tbody>
+</table>
+
+<div class="caja clave">
+<div class="titulo">El patrón común</div>
+<p>Las tres emergieron <b>del contacto con los datos</b>, no de la revisión del diseño. Ninguna era detectable leyendo la especificación: hacía falta evaluarla con números concretos y comprobar que el resultado tenía sentido económico.</p>
+<p>Y las tres están hoy bajo test y documentadas con su razonamiento, de modo que un lector externo —o el autor dentro de seis meses— pueda distinguir <b>qué se planeó de qué se aprendió</b>. Esa distinción es, probablemente, lo más valioso que un proyecto de portafolio puede ofrecer.</p>
+</div>
+
+<!-- ==================== PARTE XI ==================== -->
+<h1 id="parte11"><span class="num">Parte XI</span>Crítica: hasta dónde llega este proyecto</h1>
+
+<p>Cualquier documento técnico que solo enumere lo que hizo bien es propaganda. Esta parte es la evaluación honesta de qué es fiel a la práctica real y qué no.</p>
+
+<h2>65. Qué es fiel a la práctica real</h2>
+
+<table>
+<thead><tr><th style="width:32%">Elemento</th><th>Valoración</th></tr></thead>
+<tbody>
+<tr><td><b>La mecánica de IRRBB</b></td><td>Fiel al estándar: los seis escenarios con sus escalares y factores reales, las 19 bandas con sus puntos medios, el suelo post-choque, los topes de núcleo por categoría de cliente, el <i>outlier test</i>. Un analista de ALM reconocería el vocabulario y las convenciones.</td></tr>
+<tr><td><b>La beta asimétrica</b></td><td>Literatura real (Hannan-Berger, Neumark-Sharpe) con la especificación de ajuste parcial correcta y el estimador de rezagos distribuidos que exige.</td></tr>
+<tr><td><b>Calibración a la par</b></td><td>Práctica de mesa. Aislar riesgo de tasa de riesgo de crédito es exactamente lo que se hace.</td></tr>
+<tr><td><b>Flujos de repreciación</b></td><td>Correcto y no obvio. La coherencia forzada entre el gap y el EVE es una disciplina que muchos bancos no mantienen.</td></tr>
+<tr><td><b>Duración efectiva y convexidad</b></td><td>La elección de diferencias finitas sobre fórmula cerrada es la correcta en presencia de flujos dependientes del modelo.</td></tr>
+<tr><td><b>La no identificabilidad del núcleo</b></td><td>Es un problema real y conocido del oficio, y la conexión con el porqué de los topes regulatorios es un argumento genuino.</td></tr>
+<tr><td><b>La disciplina de validación</b></td><td>Pre-registro, ground truth, controles ERROR/WARNING separados, tests de invariantes. Es la parte más cercana a lo que un supervisor pediría.</td></tr>
+</tbody>
+</table>
+
+<h2>66. Qué no lo es</h2>
+
+<h3>1. El resultado más lucido es circular</h3>
+
+<p>Los datos se generaron con un proceso y luego se estimaron los parámetros <b>de ese mismo proceso</b>. Que β̂ salga a 0,03 del verdadero prueba que <b>no hay bugs</b>, no que el método funcione. En la vida real el error dominante es <b>de especificación</b> —no se conoce la forma funcional— y aquí está apagado por construcción.</p>
+
+<p>Un ejercicio que reduciría mucho esta objeción: generar con una especificación y estimar con otra deliberadamente distinta, para medir el costo de la mala especificación. No se hizo.</p>
+
+<h3>2. Que el banco gane en ambas direcciones es sospechoso</h3>
+
+<p>+2,77% y +4,13% ante un choque simétrico. Un banco real que intenta no trasladar 400 pb de subida <b>pierde depósitos</b>: eso es exactamente 2023 (Silicon Valley Bank, First Republic). El término de migración del generador es demasiado débil para disciplinar ese comportamiento, y el Módulo 3 ni siquiera lo proyecta hacia adelante —el supuesto de balance constante lo apaga por completo—.</p>
+
+<p><b>La franquicia de depósitos no es una opción gratis; tiene un precio que este modelo no cobra.</b> Un modelo completo tendría la beta y el volumen determinados conjuntamente: subir menos la tasa cuesta saldo, y ese saldo hay que reemplazarlo con fondeo mayorista más caro.</p>
+
+<h3>3. Falta el libro de coberturas</h3>
+
+<p>Ningún banco con −17% de EVE se queda quieto: pone un <i>overlay</i> de swaps de tasa de interés. Modelar ALM sin derivados es modelar el coche sin volante — <b>y la gestión es la mitad del trabajo, no solo la medición</b>.</p>
+
+<p>Un módulo de cobertura sería la extensión más valiosa del proyecto: dado el perfil actual, ¿qué nocional de swap pagador fijo a qué plazo lleva el gap de duración a cero, y qué le cuesta al NII?</p>
+
+<h3>4. El prepago no es «fuera de alcance», es el elefante</h3>
+
+<p>9.000 M de hipotecas fijas <b>sin opción de prepago no existen</b>. Incluirlo introduce <b>convexidad negativa</b>: cuando las tasas bajan, el hipotecado refinancia y el activo se acorta justo cuando al banco le convendría que fuera largo; cuando suben, nadie prepaga y el activo se alarga justo cuando le convendría que fuera corto. <b>El efecto va en contra del banco en ambos sentidos.</b></p>
+
+<p>Probablemente cambiaría cuál de los seis escenarios es el peor. Está documentado como omisión, pero <b>documentar una omisión no la hace pequeña</b>.</p>
+
+<h3>5. La tensión estaba encargada</h3>
+
+<p>El perfil del banco pide explícitamente calibrar para que el NII suba y el EVE baje ante +200 pb. El proyecto <b>demuestra</b> el mecanismo con números propios; <b>no lo descubre</b>. Es honesto —está escrito en el contrato del proyecto desde el primer día— pero no es un hallazgo.</p>
+
+<p>Los hallazgos genuinos del proyecto son otros: la no identificabilidad de la vida del núcleo, la ganancia en ambas direcciones y su acotación por el piso de cero, y el cambio de veredicto regulatorio dentro del rango del supuesto.</p>
+
+<h3>6. Ciento veinte observaciones mensuales</h3>
+
+<p>Diez años de datos mensuales para hablar de comportamiento a cinco años, con <b>exactamente un ciclo completo</b> en la muestra. Un modelo de depósitos de verdad usa datos <b>a nivel de cuenta</b>, millones de filas, con antigüedad, saldo y segmento — que es precisamente lo que resolvería el problema de identificación de §37.</p>
+
+<h3>7. Otras omisiones, más menores</h3>
+
+<ul class="compacta">
+<li><b>Riesgo de base</b>: un solo índice de referencia. En un banco real el activo sigue a un índice y el pasivo a otro, y la diferencia entre ambos es un riesgo propio.</li>
+<li><b>Multi-moneda</b>: el estándar exige calcular por moneda y agregar con reglas asimétricas (las ganancias en una moneda no compensan íntegramente las pérdidas en otra).</li>
+<li><b>Retiro anticipado</b> de depósitos a plazo: la opción simétrica del prepago, del lado del pasivo.</li>
+<li><b>Interacción con riesgo de crédito</b>: en un choque grande, la calidad crediticia del activo se deteriora; el modelo trata ambos como independientes.</li>
+<li><b>Gobernanza</b>: política de ALM, estructura de límites, validación independiente formal, <i>backtesting</i> periódico contra el NII realizado, documentación auditable, gobierno del dato. Documentado en el Módulo 5, no implementado.</li>
+</ul>
+
+<h2>67. Veredicto</h2>
+
+<div class="caja clave">
+<div class="titulo">Conclusión honesta</div>
+<p><b>Válido como demostración de comprensión. No válido como medición de riesgo de un banco real.</b></p>
+<p>Es un simulador de vuelo bien construido, no un vuelo.</p>
+</div>
+
+<p>Para un proyecto de portafolio eso es lo correcto, con una condición: <b>la forma fuerte de presentarlo no es «implementé IRRBB», es «implementé el núcleo y sé exactamente dónde miente»</b>.</p>
+
+<p>Las objeciones 1, 2 y 3 de §66 —circularidad, franquicia sin precio, ausencia del libro de coberturas— son mejores respuestas de entrevista que cualquier tabla de resultados, porque demuestran que se entiende la diferencia entre un modelo que corre y un modelo en el que se puede confiar. Un candidato que llega con el número y sin las objeciones ha hecho la mitad del trabajo.</p>
+
+<div class="caja">
+<div class="titulo">Las tres extensiones que más valor añadirían</div>
+<ol class="compacta">
+<li><b>Módulo de cobertura</b>: dado el perfil, qué swap lo neutraliza y qué cuesta en NII. Convierte medición en gestión.</li>
+<li><b>Prepago con modelo de refinanciación</b>: introduce convexidad negativa y probablemente cambia el peor escenario.</li>
+<li><b>Beta y volumen determinados conjuntamente</b>: pone precio a la franquicia y elimina la objeción 2.</li>
+</ol>
+</div>
+
+<!-- ==================== ANEXOS ==================== -->
+<h1 id="anexos"><span class="num">Anexos</span>Notación, glosario, mapa y fuentes</h1>
+
+<h2>Anexo A — Notación</h2>
+
+<table>
+<thead><tr><th class="c" style="width:12%">Símbolo</th><th style="width:38%">Significado</th><th class="c" style="width:12%">Símbolo</th><th>Significado</th></tr></thead>
+<tbody>
+<tr><td class="c"><b>y(τ)</b></td><td>Tasa cero a plazo τ, composición continua</td><td class="c"><b>β⁺, β⁻</b></td><td>Beta de traspaso al alza / a la baja</td></tr>
+<tr><td class="c"><b>DF(τ)</b></td><td>Factor de descuento a plazo τ</td><td class="c"><b>β̄</b></td><td>Beta de largo plazo, (β⁺+β⁻)/2</td></tr>
+<tr><td class="c"><b>τ</b></td><td>Plazo en años</td><td class="c"><b>λ</b></td><td>Velocidad de ajuste parcial (deposits)</td></tr>
+<tr><td class="c"><b>β<sub>0,1,2</sub></b></td><td>Nivel, pendiente, curvatura de Nelson-Siegel</td><td class="c"><b>λ<sub>d</sub></b></td><td>Tasa de runoff del núcleo, 1/vida</td></tr>
+<tr><td class="c"><b>L<sub>1</sub>, L<sub>2</sub></b></td><td>Cargas de pendiente y curvatura</td><td class="c"><b>κ</b></td><td>Reversión (Vasicek) o ancla competitiva</td></tr>
+<tr><td class="c"><b>D</b></td><td>Duración modificada / efectiva, en años</td><td class="c"><b>θ</b></td><td>Nivel de reversión de la tasa (Vasicek)</td></tr>
+<tr><td class="c"><b>C</b></td><td>Convexidad</td><td class="c"><b>r<sub>t</sub></b></td><td>Tasa de referencia (política)</td></tr>
+<tr><td class="c"><b>S(t)</b></td><td>Escalar de tramo, e<sup>−t/4</sup></td><td class="c"><b>d<sub>t</sub></b></td><td>Tasa pagada al depósito</td></tr>
+<tr><td class="c"><b>Δy</b></td><td>Choque de tasa</td><td class="c"><b>N, S</b></td><td>Nominal, saldo</td></tr>
+</tbody>
+</table>
+
+<h2>Anexo B — Glosario español–inglés</h2>
+
+<table>
+<thead><tr><th style="width:26%">Español</th><th style="width:26%">Inglés</th><th>Nota</th></tr></thead>
+<tbody>
+<tr><td>Gestión de activos y pasivos</td><td>Asset and Liability Management (ALM)</td><td>El comité es el ALCO.</td></tr>
+<tr><td>Riesgo de tasa en el libro bancario</td><td>Interest Rate Risk in the Banking Book (IRRBB)</td><td>BCBS d368, 2016.</td></tr>
+<tr><td>Margen financiero</td><td>Net Interest Income (NII)</td><td>También «margen de intermediación».</td></tr>
+<tr><td>Valor económico del patrimonio</td><td>Economic Value of Equity (EVE)</td><td>A veces EV o ΔEVE.</td></tr>
+<tr><td>Brecha de repreciación</td><td>Repricing gap</td><td>Contra <i>maturity gap</i>, de liquidez.</td></tr>
+<tr><td>Depósito sin vencimiento</td><td>Non-Maturity Deposit (NMD)</td><td>Vista y ahorro.</td></tr>
+<tr><td>Núcleo / porción estable</td><td>Core deposits / stable portion</td><td><b>Tres objetos distintos</b> — ver §32.</td></tr>
+<tr><td>Traspaso, beta de depósito</td><td>Deposit beta, pass-through</td><td>Fracción del movimiento trasladada.</td></tr>
+<tr><td>Prueba de valor atípico</td><td>Outlier test</td><td>15% del Tier 1. Disparador, no límite.</td></tr>
+<tr><td>Portafolio de réplica</td><td>Replicating portfolio</td><td>Escalera de tramos que sigue la tasa.</td></tr>
+<tr><td>Cohorte / añada</td><td>Vintage / cohort</td><td>Conjunto originado en un mismo período.</td></tr>
+<tr><td>Sistema francés</td><td>Level-payment / annuity amortization</td><td>Cuota constante.</td></tr>
+<tr><td>Suelo post-choque</td><td>Post-shock floor</td><td>−100 pb subiendo a 0% en 20 años.</td></tr>
+<tr><td>Traslado de mezcla de depósitos</td><td>Deposit mix shift</td><td>Migración vista → plazo.</td></tr>
+<tr><td>Revaluación completa</td><td>Full revaluation</td><td>Frente a aproximación de duración.</td></tr>
+<tr><td>Apetito de riesgo</td><td>Risk appetite</td><td>Límites internos, no regulatorios.</td></tr>
+</tbody>
+</table>
+
+<h2>Anexo C — Mapa código ↔ teoría</h2>
+
+<table>
+<thead><tr><th style="width:26%">Archivo</th><th style="width:30%">Funciones principales</th><th>Secciones de este documento</th></tr></thead>
+<tbody>
+<tr><td><code>config/params.py</code></td><td><code>make_config</code> y todos los bloques de parámetros</td><td>Transversal. Regla: ningún número mágico en <code>src/</code>.</td></tr>
+<tr><td><code>src/curves.py</code></td><td><code>nelson_siegel</code>, <code>solve_nelson_siegel_anchored</code>, <code>interpolate_zero</code>, <code>discount_factors</code>, <code>schedule_cashflows</code>, <code>amortization_schedule</code>, <code>macaulay_duration</code>, <code>par_rate</code></td><td>§5–§12</td></tr>
+<tr><td><code>src/data_gen.py</code></td><td><code>generate_reference_rate</code>, <code>generate_yield_curves</code>, <code>generate_deposit_rates</code>, <code>generate_deposit_balances</code>, <code>generate_instruments</code>, <code>build_ground_truth</code></td><td>§13–§20</td></tr>
+<tr><td><code>src/validation.py</code></td><td><code>calibration_metrics</code>, <code>run_all_checks</code>, <code>report</code>, <code>assert_no_errors</code></td><td>§21–§25, §64.1</td></tr>
+<tr><td><code>src/balance.py</code></td><td><code>bandas_frame</code>, <code>asignar_banda</code>, <code>perfil_repreciacion</code>, <code>gap_repreciacion</code>, <code>gap_vencimiento</code>, <code>indicadores_gap</code>, <code>reconciliacion</code></td><td>§26–§31</td></tr>
+<tr><td><code>src/deposits.py</code></td><td><code>estimar_beta_asimetrica</code>, <code>estimar_proporcion_estable</code>, <code>plazo_replica</code>, <code>diagnostico_identificabilidad</code>, <code>nucleo_irrbb</code>, <code>perfil_bandas_nmd</code>, <code>instrumentos_conductuales</code>, <code>sensibilidad_nmd</code></td><td>§32–§40</td></tr>
+<tr><td><code>src/scenarios.py</code></td><td><code>escalares</code>, <code>choque</code>, <code>piso_post_choque</code>, <code>aplicar_escenario</code></td><td>§41–§45</td></tr>
+<tr><td><code>src/nii.py</code></td><td><code>perfil_traspaso</code>, <code>proyectar_nii</code>, <code>tabla_delta_nii</code>, <code>descomposicion_nii</code>, <code>sensibilidad_entorno</code></td><td>§46–§52</td></tr>
+<tr><td><code>src/eve.py</code></td><td><code>_flujos</code>, <code>cartera_valorable</code>, <code>eve</code>, <code>tabla_delta_eve</code>, <code>duracion_convexidad</code>, <code>tabla_aproximaciones</code>, <code>sensibilidad_eve</code>, <code>sensibilidad_mix_hipotecario</code></td><td>§53–§60</td></tr>
+<tr><td><code>tests/</code></td><td>238 tests, incluidos los conceptuales de §63</td><td>§63, §64</td></tr>
+</tbody>
+</table>
+
+<h3>Cómo reproducir todo</h3>
+
+<pre>pip install -r requirements.txt
+
+python run_module0.py     # gate de validación → data/validation_report.md
+python run_module1.py     # brecha de repreciación → data/gap_report.md
+python run_module2.py     # modelo conductual NMD → data/nmd_report.md
+python run_module3.py     # margen financiero → data/nii_report.md
+python run_module4.py     # valor económico → data/eve_report.md
+
+python -m pytest tests/ -q</pre>
+
+<h2>Anexo D — Bibliografía y fuentes normativas</h2>
+
+<h3>Normativa</h3>
+<ul class="compacta">
+<li><b>BCBS d368</b> (2016). <i>Interest Rate Risk in the Banking Book</i>. Comité de Supervisión Bancaria de Basilea. Fuente de los seis escenarios, las 19 bandas, la calibración por moneda, los topes de NMD y el <i>outlier test</i>.</li>
+<li><b>BCBS</b> (2004). <i>Principles for the Management and Supervision of Interest Rate Risk</i>. El marco anterior.</li>
+<li><b>SR 11-7</b> (2011). <i>Guidance on Model Risk Management</i>. Reserva Federal / OCC. Doctrina de validación independiente.</li>
+<li><b>BCE / TRIM</b> (2017–2021). <i>Targeted Review of Internal Models</i>. Equivalente en la eurozona.</li>
+</ul>
+
+<h3>Curvas de rendimiento</h3>
+<ul class="compacta">
+<li><b>Nelson, C. y Siegel, A.</b> (1987). «Parsimonious Modeling of Yield Curves». <i>Journal of Business</i>, 60(4).</li>
+<li><b>Diebold, F. y Li, C.</b> (2006). «Forecasting the Term Structure of Government Bond Yields». <i>Journal of Econometrics</i>, 130(2). Interpretación nivel/pendiente/curvatura y la práctica de fijar λ.</li>
+<li><b>Vasicek, O.</b> (1977). «An Equilibrium Characterization of the Term Structure». <i>Journal of Financial Economics</i>, 5(2).</li>
+</ul>
+
+<h3>Depósitos y beta</h3>
+<ul class="compacta">
+<li><b>Hannan, T. y Berger, A.</b> (1991). «The Rigidity of Prices: Evidence from the Banking Industry». <i>American Economic Review</i>, 81(4). Asimetría de la rigidez de precios.</li>
+<li><b>Neumark, D. y Sharpe, S.</b> (1992). «Market Structure and the Nature of Price Rigidity: Evidence from the Market for Consumer Deposits». <i>Quarterly Journal of Economics</i>, 107(2).</li>
+<li><b>Drechsler, I., Savov, A. y Schnabl, P.</b> (2017). «The Deposits Channel of Monetary Policy». <i>QJE</i>, 132(4).</li>
+<li><b>Drechsler, I., Savov, A. y Schnabl, P.</b> (2021). «Banking on Deposits: Maturity Transformation without Interest Rate Risk». <i>Journal of Finance</i>, 76(3). La franquicia de depósitos como cobertura natural de tasa — el marco teórico del resultado de §51.</li>
+</ul>
+
+<h3>Métodos numéricos</h3>
+<ul class="compacta">
+<li><b>Lawson, C. y Hanson, R.</b> (1974). <i>Solving Least Squares Problems</i>. El algoritmo NNLS usado en el portafolio de réplica.</li>
+<li><b>Brent, R.</b> (1973). <i>Algorithms for Minimization without Derivatives</i>. El método de búsqueda de raíces usado en la calibración a la par.</li>
+</ul>
+
+<div class="sep">· · ·</div>
+
+<p class="nota centro">Documento generado a partir del código del repositorio <code>A&amp;L_Manage</code>.<br>
+Todas las cifras citadas son las que produce el proyecto con la semilla <code>20251231</code>.</p>
+
+
+
+
+
+
+
+</body>
+</html>
